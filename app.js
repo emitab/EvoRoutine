@@ -472,14 +472,25 @@ class EvoRoutineApp {
     // === Modals: Settings ===
     openSettingsModal() {
         const modal = this.elements.settingsModal;
+        const isOnboarding = !this.state.user;
 
-        // Load current values
-        document.getElementById('settingsName').value = this.state.user.name;
-        document.getElementById('languageSelector').value = this.state.settings.language;
-        document.getElementById('settingsEnvironment').value = this.state.user.environment;
-        document.getElementById('settingsLevel').value = this.state.user.level;
-        document.getElementById('settingsGoal').value = this.state.user.goal;
-        document.getElementById('restTime').value = this.state.settings.restTime;
+        // Toggle sections visibility
+        ['settingsLanguage', 'settingsProfile', 'settingsPreferences', 'settingsData', 'settingsDanger'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = isOnboarding ? 'none' : 'block';
+        });
+        if (document.getElementById('settingsTheme')) document.getElementById('settingsTheme').style.display = 'block';
+
+        if (!isOnboarding) {
+            document.getElementById('settingsName').value = this.state.user.name;
+            document.getElementById('languageSelector').value = this.state.settings.language;
+            document.getElementById('settingsEnvironment').value = this.state.user.environment;
+            document.getElementById('settingsLevel').value = this.state.user.level;
+            document.getElementById('settingsGoal').value = this.state.user.goal;
+            document.getElementById('restTime').value = this.state.settings.restTime;
+        } else {
+            document.getElementById('languageSelector').value = this.state.settings.language;
+        }
 
         // Set Theme active state
         document.querySelectorAll('.theme-btn').forEach(btn => {
@@ -497,19 +508,24 @@ class EvoRoutineApp {
         // Save Settings
         this.state.settings.language = newLang;
         this.state.settings.theme = newTheme;
-        this.state.settings.restTime = parseInt(document.getElementById('restTime').value);
 
-        // Save User Data
-        this.state.user.name = document.getElementById('settingsName').value;
-        this.state.user.environment = document.getElementById('settingsEnvironment').value;
-        this.state.user.level = document.getElementById('settingsLevel').value;
-        this.state.user.goal = document.getElementById('settingsGoal').value;
+        const isOnboarding = !this.state.user;
+        if (!isOnboarding) {
+            this.state.settings.restTime = parseInt(document.getElementById('restTime').value);
+
+            // Save User Data
+            this.state.user.name = document.getElementById('settingsName').value;
+            this.state.user.environment = document.getElementById('settingsEnvironment').value;
+            this.state.user.level = document.getElementById('settingsLevel').value;
+            this.state.user.goal = document.getElementById('settingsGoal').value;
+
+            this.elements.userNameDisplay.innerText = this.state.user.name;
+        }
 
         this.saveState();
         this.applyTheme(newTheme);
         this.i18n.setLanguage(newLang);
         this.updateUIText();
-        this.elements.userNameDisplay.innerText = this.state.user.name;
 
         this.closeModal('settingsModal');
     }
