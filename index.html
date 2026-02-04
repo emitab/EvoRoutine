@@ -35,21 +35,15 @@
                     <span class="logo-text">EvoRoutine</span>
                 </div>
                 <div class="header-actions">
-                    <button class="btn-icon" id="themeToggle" aria-label="Cambiar tema">
+                    <button class="btn-icon" id="settingsBtn" aria-label="Settings" data-i18n="header.settings">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
-                            <circle cx="12" cy="12" r="5" />
-                            <line x1="12" y1="1" x2="12" y2="3" />
-                            <line x1="12" y1="21" x2="12" y2="23" />
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                            <line x1="1" y1="12" x2="3" y2="12" />
-                            <line x1="21" y1="12" x2="23" y2="12" />
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                            <circle cx="12" cy="12" r="3" />
+                            <path
+                                d="M12 1v6m0 6v6m-8-7h6m6 0h6M6.34 6.34l4.24 4.24m5.66 5.66l4.24 4.24M6.34 17.66l4.24-4.24m5.66-5.66l4.24-4.24" />
                         </svg>
                     </button>
-                    <div class="user-profile" id="userProfile">
+                    <div class="user-profile" id="userProfile" style="display: none;">
                         <div class="avatar">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
@@ -84,40 +78,72 @@
                             </defs>
                         </svg>
                     </div>
-                    <h1 class="welcome-title">Tu evolución, <span class="gradient-text">día a día</span></h1>
-                    <p class="welcome-subtitle">Rutinas personalizadas que se adaptan a tu ritmo de vida real</p>
+                    <h1 class="welcome-title">
+                        <span data-i18n="welcome.title">Tu evolución,</span>
+                        <span class="gradient-text" data-i18n="welcome.titleHighlight">día a día</span>
+                    </h1>
+                    <p class="welcome-subtitle" data-i18n="welcome.subtitle">Rutinas personalizadas que se adaptan a tu
+                        ritmo de vida real</p>
 
                     <div class="welcome-form">
                         <div class="input-group">
-                            <label for="userName">¿Cómo te llamás?</label>
-                            <input type="text" id="userName" placeholder="Ej: Alex" class="input-field"
-                                autocomplete="given-name">
+                            <label for="userName" data-i18n="welcome.nameLabel">¿Cómo te llamás?</label>
+                            <input type="text" id="userName" data-i18n-placeholder="welcome.namePlaceholder"
+                                placeholder="Tu nombre" class="input-field" autocomplete="given-name">
                         </div>
 
                         <div class="input-group">
-                            <label>¿Qué querés mejorar?</label>
-                            <div class="category-selector">
-                                <button class="category-btn" data-category="fitness">
-                                    <span class="category-icon">💪</span>
-                                    <span>Fitness</span>
+                            <label data-i18n="welcome.environmentLabel">¿Dónde vas a entrenar?</label>
+                            <div class="option-selector">
+                                <button class="option-btn" data-option="environment" data-value="gym">
+                                    <span class="option-icon">🏋️</span>
+                                    <span data-i18n="welcome.gym">Gimnasio</span>
                                 </button>
-                                <button class="category-btn" data-category="estudio">
-                                    <span class="category-icon">📚</span>
-                                    <span>Estudio</span>
+                                <button class="option-btn" data-option="environment" data-value="home">
+                                    <span class="option-icon">🏠</span>
+                                    <span data-i18n="welcome.home">Casa</span>
                                 </button>
-                                <button class="category-btn" data-category="trabajo">
-                                    <span class="category-icon">💼</span>
-                                    <span>Trabajo</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label data-i18n="welcome.levelLabel">¿Cuál es tu nivel?</label>
+                            <div class="option-selector">
+                                <button class="option-btn" data-option="level" data-value="beginner">
+                                    <span class="option-icon">🌱</span>
+                                    <span data-i18n="welcome.beginner">Principiante</span>
                                 </button>
-                                <button class="category-btn" data-category="bienestar">
-                                    <span class="category-icon">🧘</span>
-                                    <span>Bienestar</span>
+                                <button class="option-btn" data-option="level" data-value="intermediate">
+                                    <span class="option-icon">💪</span>
+                                    <span data-i18n="welcome.intermediate">Intermedio</span>
+                                </button>
+                                <button class="option-btn" data-option="level" data-value="advanced">
+                                    <span class="option-icon">🔥</span>
+                                    <span data-i18n="welcome.advanced">Avanzado</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label data-i18n="welcome.goalLabel">¿Cuál es tu objetivo?</label>
+                            <div class="option-selector">
+                                <button class="option-btn" data-option="goal" data-value="strength">
+                                    <span class="option-icon">💎</span>
+                                    <span data-i18n="welcome.strength">Fuerza</span>
+                                </button>
+                                <button class="option-btn" data-option="goal" data-value="hypertrophy">
+                                    <span class="option-icon">💪</span>
+                                    <span data-i18n="welcome.hypertrophy">Hipertrofia</span>
+                                </button>
+                                <button class="option-btn" data-option="goal" data-value="endurance">
+                                    <span class="option-icon">⚡</span>
+                                    <span data-i18n="welcome.endurance">Resistencia</span>
                                 </button>
                             </div>
                         </div>
 
                         <button class="btn-primary" id="startBtn">
-                            Empezar mi evolución
+                            <span data-i18n="welcome.startButton">Empezar mi evolución</span>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <line x1="5" y1="12" x2="19" y2="12" />
@@ -129,15 +155,15 @@
                     <div class="trust-signal">
                         <div class="trust-item">
                             <span class="trust-number">95%</span>
-                            <span class="trust-label">Tasa de cumplimiento</span>
+                            <span class="trust-label" data-i18n="welcome.trust1">Tasa de cumplimiento</span>
                         </div>
                         <div class="trust-item">
                             <span class="trust-number">2min</span>
-                            <span class="trust-label">Setup inicial</span>
+                            <span class="trust-label" data-i18n="welcome.trust2">Setup inicial</span>
                         </div>
                         <div class="trust-item">
                             <span class="trust-number">100%</span>
-                            <span class="trust-label">Gratis</span>
+                            <span class="trust-label" data-i18n="welcome.trust3">Gratis</span>
                         </div>
                     </div>
                 </div>
@@ -155,14 +181,14 @@
                             <line x1="8" y1="2" x2="8" y2="6" />
                             <line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
-                        Hoy
+                        <span data-i18n="tabs.today">Hoy</span>
                     </button>
                     <button class="tab" data-tab="routines">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                         </svg>
-                        Rutinas
+                        <span data-i18n="tabs.routines">Rutinas</span>
                     </button>
                     <button class="tab" data-tab="progress">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -171,7 +197,7 @@
                             <line x1="12" y1="20" x2="12" y2="4" />
                             <line x1="6" y1="20" x2="6" y2="14" />
                         </svg>
-                        Progreso
+                        <span data-i18n="tabs.progress">Progreso</span>
                     </button>
                 </nav>
 
@@ -181,7 +207,7 @@
                     <div class="tab-pane active" id="todayPane">
                         <div class="pane-header">
                             <div class="pane-title">
-                                <h2>Tu rutina de hoy</h2>
+                                <h2 data-i18n="today.title">Tu rutina de hoy</h2>
                                 <p class="date-display" id="dateDisplay"></p>
                             </div>
                             <div class="daily-score" id="dailyScore">
@@ -204,9 +230,7 @@
                             </div>
                         </div>
 
-                        <div class="tasks-container" id="tasksToday">
-                            <!-- Tasks will be rendered here -->
-                        </div>
+                        <div class="tasks-container" id="tasksToday"></div>
 
                         <button class="btn-secondary" id="addTaskBtn">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -214,42 +238,37 @@
                                 <line x1="12" y1="5" x2="12" y2="19" />
                                 <line x1="5" y1="12" x2="19" y2="12" />
                             </svg>
-                            Nueva tarea
+                            <span data-i18n="today.addTask">Nueva tarea</span>
                         </button>
 
-                        <!-- Adaptive Suggestions -->
-                        <div class="suggestions-container" id="suggestions">
-                            <!-- Suggestions will appear here -->
-                        </div>
+                        <div class="suggestions-container" id="suggestions"></div>
                     </div>
 
                     <!-- Routines View -->
                     <div class="tab-pane" id="routinesPane">
                         <div class="pane-header">
-                            <h2>Mis Rutinas</h2>
+                            <h2 data-i18n="routines.title">Mis Rutinas</h2>
                             <button class="btn-primary btn-sm" id="createRoutineBtn">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
                                     <line x1="12" y1="5" x2="12" y2="19" />
                                     <line x1="5" y1="12" x2="19" y2="12" />
                                 </svg>
-                                Crear rutina
+                                <span data-i18n="routines.create">Crear rutina</span>
                             </button>
                         </div>
 
-                        <div class="routines-grid" id="routinesGrid">
-                            <!-- Routines will be rendered here -->
-                        </div>
+                        <div class="routines-grid" id="routinesGrid"></div>
                     </div>
 
                     <!-- Progress View -->
                     <div class="tab-pane" id="progressPane">
                         <div class="pane-header">
-                            <h2>Tu Progreso</h2>
+                            <h2 data-i18n="progress.title">Tu Progreso</h2>
                             <select class="period-selector" id="periodSelector">
-                                <option value="7">Última semana</option>
-                                <option value="30">Último mes</option>
-                                <option value="90">Últimos 3 meses</option>
+                                <option value="7" data-i18n="progress.week">Última semana</option>
+                                <option value="30" data-i18n="progress.month">Último mes</option>
+                                <option value="90" data-i18n="progress.quarter">Últimos 3 meses</option>
                             </select>
                         </div>
 
@@ -258,44 +277,40 @@
                                 <div class="stat-icon">🔥</div>
                                 <div class="stat-content">
                                     <span class="stat-value" id="streakValue">0</span>
-                                    <span class="stat-label">Días consecutivos</span>
+                                    <span class="stat-label" data-i18n="progress.streak">Días consecutivos</span>
                                 </div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-icon">✅</div>
                                 <div class="stat-content">
                                     <span class="stat-value" id="completedValue">0</span>
-                                    <span class="stat-label">Tareas completadas</span>
+                                    <span class="stat-label" data-i18n="progress.completed">Tareas completadas</span>
                                 </div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-icon">⏱️</div>
                                 <div class="stat-content">
                                     <span class="stat-value" id="timeValue">0h</span>
-                                    <span class="stat-label">Tiempo invertido</span>
+                                    <span class="stat-label" data-i18n="progress.time">Tiempo invertido</span>
                                 </div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-icon">📈</div>
                                 <div class="stat-content">
                                     <span class="stat-value" id="improvementValue">+0%</span>
-                                    <span class="stat-label">Mejora promedio</span>
+                                    <span class="stat-label" data-i18n="progress.improvement">Mejora promedio</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="chart-container">
-                            <h3>Actividad semanal</h3>
-                            <div class="activity-chart" id="activityChart">
-                                <!-- Chart will be rendered here -->
-                            </div>
+                            <h3 data-i18n="progress.activity">Actividad semanal</h3>
+                            <div class="activity-chart" id="activityChart"></div>
                         </div>
 
                         <div class="insights-container">
-                            <h3>Insights adaptativos</h3>
-                            <div class="insights-list" id="insightsList">
-                                <!-- Insights will be rendered here -->
-                            </div>
+                            <h3 data-i18n="progress.insights">Insights adaptativos</h3>
+                            <div class="insights-list" id="insightsList"></div>
                         </div>
                     </div>
                 </div>
@@ -303,11 +318,135 @@
         </div>
     </main>
 
-    <!-- Modals -->
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 data-i18n="settings.title">Ajustes</h3>
+                <button class="btn-icon" id="closeSettingsModal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4 data-i18n="settings.language">Idioma</h4>
+                    <select id="languageSelector" class="input-field">
+                        <option value="es">Español</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+
+                <div class="settings-section">
+                    <h4 data-i18n="settings.theme">Tema</h4>
+                    <div class="theme-selector">
+                        <button class="theme-btn active" data-theme="dark">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                            </svg>
+                            <span data-i18n="settings.themeDark">Oscuro</span>
+                        </button>
+                        <button class="theme-btn" data-theme="light">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="5" />
+                                <line x1="12" y1="1" x2="12" y2="3" />
+                                <line x1="12" y1="21" x2="12" y2="23" />
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                <line x1="1" y1="12" x2="3" y2="12" />
+                                <line x1="21" y1="12" x2="23" y2="12" />
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                            </svg>
+                            <span data-i18n="settings.themeLight">Claro</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4 data-i18n="settings.profile">Perfil</h4>
+                    <div class="input-group">
+                        <label for="settingsName" data-i18n="settings.name">Nombre</label>
+                        <input type="text" id="settingsName" class="input-field">
+                    </div>
+                    <div class="input-group">
+                        <label for="settingsEnvironment" data-i18n="settings.environment">Entorno de
+                            entrenamiento</label>
+                        <select id="settingsEnvironment" class="input-field">
+                            <option value="gym" data-i18n="welcome.gym">Gimnasio</option>
+                            <option value="home" data-i18n="welcome.home">Casa</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="settingsLevel" data-i18n="settings.level">Nivel</label>
+                        <select id="settingsLevel" class="input-field">
+                            <option value="beginner" data-i18n="welcome.beginner">Principiante</option>
+                            <option value="intermediate" data-i18n="welcome.intermediate">Intermedio</option>
+                            <option value="advanced" data-i18n="welcome.advanced">Avanzado</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="settingsGoal" data-i18n="settings.goal">Objetivo</label>
+                        <select id="settingsGoal" class="input-field">
+                            <option value="strength" data-i18n="welcome.strength">Fuerza</option>
+                            <option value="hypertrophy" data-i18n="welcome.hypertrophy">Hipertrofia</option>
+                            <option value="endurance" data-i18n="welcome.endurance">Resistencia</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4 data-i18n="settings.preferences">Preferencias</h4>
+                    <div class="input-group">
+                        <label for="restTime" data-i18n="settings.restTime">Tiempo de descanso predeterminado
+                            (seg)</label>
+                        <input type="number" id="restTime" class="input-field" min="30" max="300" step="15" value="60">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4 data-i18n="settings.data">Datos</h4>
+                    <button class="btn-secondary btn-full" id="exportDataBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        <span data-i18n="settings.export">Exportar datos</span>
+                    </button>
+                </div>
+
+                <div class="settings-section danger-zone">
+                    <h4 data-i18n="settings.deleteAccount">Eliminar cuenta</h4>
+                    <p class="text-muted" data-i18n="settings.deleteConfirm">¿Estás seguro de que querés eliminar tu
+                        cuenta? Esta acción no se puede deshacer.</p>
+                    <button class="btn-danger btn-full" id="deleteAccountBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                        <span data-i18n="settings.deleteAccount">Eliminar cuenta</span>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelSettingsBtn" data-i18n="settings.cancel">Cancelar</button>
+                <button class="btn-primary" id="saveSettingsBtn" data-i18n="settings.save">Guardar cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
     <div class="modal" id="taskModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="taskModalTitle">Nueva Tarea</h3>
+                <h3 id="taskModalTitle" data-i18n="taskModal.create">Nueva Tarea</h3>
                 <button class="btn-icon" id="closeTaskModal">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18" />
@@ -317,48 +456,52 @@
             </div>
             <div class="modal-body">
                 <div class="input-group">
-                    <label for="taskName">Nombre de la tarea</label>
-                    <input type="text" id="taskName" class="input-field" placeholder="Ej: Correr 5km">
+                    <label for="taskName" data-i18n="taskModal.name">Nombre del ejercicio</label>
+                    <input type="text" id="taskName" class="input-field"
+                        data-i18n-placeholder="taskModal.namePlaceholder" placeholder="Ej: Sentadillas">
                 </div>
 
                 <div class="input-row">
                     <div class="input-group">
-                        <label for="taskDuration">Duración estimada</label>
-                        <input type="number" id="taskDuration" class="input-field" placeholder="30" min="5">
-                        <span class="input-suffix">minutos</span>
+                        <label for="taskSets" data-i18n="taskModal.sets">Series</label>
+                        <input type="number" id="taskSets" class="input-field" placeholder="3" min="1">
                     </div>
 
                     <div class="input-group">
-                        <label for="taskCategory">Categoría</label>
-                        <select id="taskCategory" class="input-field">
-                            <option value="fitness">💪 Fitness</option>
-                            <option value="estudio">📚 Estudio</option>
-                            <option value="trabajo">💼 Trabajo</option>
-                            <option value="bienestar">🧘 Bienestar</option>
-                        </select>
+                        <label for="taskReps" data-i18n="taskModal.reps">Repeticiones</label>
+                        <input type="number" id="taskReps" class="input-field" placeholder="10" min="1">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="taskWeight" data-i18n="taskModal.weight">Peso (kg)</label>
+                        <input type="number" id="taskWeight" class="input-field" placeholder="0" min="0" step="0.5">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="taskRest" data-i18n="taskModal.rest">Descanso (seg)</label>
+                        <input type="number" id="taskRest" class="input-field" placeholder="60" min="15" step="15">
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label for="taskPriority">Prioridad</label>
-                    <div class="priority-selector">
-                        <button class="priority-btn" data-priority="low">Baja</button>
-                        <button class="priority-btn active" data-priority="medium">Media</button>
-                        <button class="priority-btn" data-priority="high">Alta</button>
-                    </div>
+                    <label for="taskNotes" data-i18n="taskModal.notes">Notas</label>
+                    <textarea id="taskNotes" class="input-field" rows="3"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" id="cancelTaskBtn">Cancelar</button>
-                <button class="btn-primary" id="saveTaskBtn">Guardar tarea</button>
+                <button class="btn-secondary" id="cancelTaskBtn" data-i18n="modal.cancel">Cancelar</button>
+                <button class="btn-primary" id="saveTaskBtn" data-i18n="modal.save">Guardar</button>
             </div>
         </div>
     </div>
 
+    <!-- Routine Modal -->
     <div class="modal" id="routineModal">
-        <div class="modal-content">
+        <div class="modal-content modal-large">
             <div class="modal-header">
-                <h3>Nueva Rutina</h3>
+                <h3 data-i18n="routineModal.create">Nueva Rutina</h3>
                 <button class="btn-icon" id="closeRoutineModal">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18" />
@@ -368,40 +511,43 @@
             </div>
             <div class="modal-body">
                 <div class="input-group">
-                    <label for="routineName">Nombre de la rutina</label>
-                    <input type="text" id="routineName" class="input-field" placeholder="Ej: Rutina matutina">
+                    <label for="routineName" data-i18n="routineModal.name">Nombre de la rutina</label>
+                    <input type="text" id="routineName" class="input-field"
+                        data-i18n-placeholder="routineModal.namePlaceholder" placeholder="Ej: Rutina de piernas">
                 </div>
 
                 <div class="input-group">
-                    <label for="routineCategory">Categoría principal</label>
-                    <select id="routineCategory" class="input-field">
-                        <option value="fitness">💪 Fitness</option>
-                        <option value="estudio">📚 Estudio</option>
-                        <option value="trabajo">💼 Trabajo</option>
-                        <option value="bienestar">🧘 Bienestar</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Días de la semana</label>
+                    <label data-i18n="routineModal.days">Días de la semana</label>
                     <div class="days-selector">
-                        <button class="day-btn" data-day="1">L</button>
-                        <button class="day-btn" data-day="2">M</button>
-                        <button class="day-btn" data-day="3">X</button>
-                        <button class="day-btn" data-day="4">J</button>
-                        <button class="day-btn" data-day="5">V</button>
-                        <button class="day-btn" data-day="6">S</button>
-                        <button class="day-btn" data-day="0">D</button>
+                        <button class="day-btn" data-day="1" data-i18n="day.mon">L</button>
+                        <button class="day-btn" data-day="2" data-i18n="day.tue">M</button>
+                        <button class="day-btn" data-day="3" data-i18n="day.wed">X</button>
+                        <button class="day-btn" data-day="4" data-i18n="day.thu">J</button>
+                        <button class="day-btn" data-day="5" data-i18n="day.fri">V</button>
+                        <button class="day-btn" data-day="6" data-i18n="day.sat">S</button>
+                        <button class="day-btn" data-day="0" data-i18n="day.sun">D</button>
                     </div>
                 </div>
+
+                <div class="routine-exercises-list" id="routineExercisesList"></div>
+
+                <button class="btn-secondary btn-full" id="addExerciseToRoutineBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span data-i18n="routineModal.addExercise">Agregar ejercicio</span>
+                </button>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" id="cancelRoutineBtn">Cancelar</button>
-                <button class="btn-primary" id="saveRoutineBtn">Crear rutina</button>
+                <button class="btn-secondary" id="cancelRoutineBtn" data-i18n="modal.cancel">Cancelar</button>
+                <button class="btn-primary" id="saveRoutineBtn" data-i18n="modal.save">Guardar rutina</button>
             </div>
         </div>
     </div>
 
+    <script src="i18n.js"></script>
+    <script src="exercises.js"></script>
     <script src="app.js"></script>
 </body>
 

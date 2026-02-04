@@ -1,35 +1,161 @@
-// ============================================
-// EvoRoutine - Intelligent Routine Adaptation System
-// ============================================
+/**
+ * EvoRoutine - Main Application Logic
+ * Handles state management, UI rendering, user interaction, and adaptive logic.
+ */
 
-class EvoRoutine {
+class EvoRoutineApp {
     constructor() {
         this.state = {
-            user: null,
-            tasks: [],
-            routines: [],
-            history: [],
+            user: null, // name, environment, level, goal, createdAt
             settings: {
                 theme: 'light',
-                adaptiveMode: true
-            }
+                language: 'es',
+                restTime: 60,
+                soundEnabled: true,
+                notifications: true
+            },
+            routines: [], // { id, name, days: [], exercises: [] }
+            tasks: [], // tasks for specific dates
+            history: [] // record of completed tasks
         };
+
+        // Initialize helpers
+        this.i18n = new I18n();
+        this.exercises = new ExerciseManager();
+
+        // DOM Elements cache
+        this.elements = {};
 
         this.init();
     }
 
-    // === Initialization ===
-    init() {
+    async init() {
         this.loadState();
+        this.cacheElements();
         this.setupEventListeners();
-        this.checkUserStatus();
+        this.applyTheme(this.state.settings.theme);
+        this.i18n.setLanguage(this.state.settings.language);
+        this.updateUIText();
+
+        if (this.state.user) {
+            this.showDashboard();
+            this.checkAndGenerateDailyTasks();
+        } else {
+            this.showWelcomeScreen();
+        }
     }
 
+    cacheElements() {
+        // Screens
+        this.elements.welcomeScreen = document.getElementById('welcomeScreen');
+        this.elements.dashboard = document.getElementById('dashboard');
+
+        // Navigation
+        this.elements.tabs = document.querySelectorAll('.tab');
+        this.elements.tabPanes = document.querySelectorAll('.tab-pane');
+        this.elements.header = document.querySelector('.header');
+
+        // User & Settings
+        this.elements.userProfile = document.getElementById('userProfile');
+        this.elements.userNameDisplay = this.elements.userProfile.querySelector('.user-name');
+        this.elements.settingsBtn = document.getElementById('settingsBtn');
+        this.elements.dateDisplay = document.getElementById('dateDisplay');
+
+        // Inputs (Welcome)
+        this.elements.startBtn = document.getElementById('startBtn');
+        this.elements.userNameInput = document.getElementById('userName');
+        this.elements.optionBtns = document.querySelectorAll('.option-btn');
+
+        // Dashboard Content
+        this.elements.tasksContainer = document.getElementById('tasksToday');
+        this.elements.routinesGrid = document.getElementById('routinesGrid');
+        this.elements.scoreValue = document.getElementById('scoreValue');
+        this.elements.scoreCircle = document.getElementById('scoreCircle');
+
+        // Modals
+        this.elements.settingsModal = document.getElementById('settingsModal');
+        this.elements.taskModal = document.getElementById('taskModal');
+        this.elements.routineModal = document.getElementById('routineModal');
+    }
+
+    setupEventListeners() {
+        // Global clicks
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                this.closeAllModals();
+            }
+        });
+
+        // Welcome Screen Options
+        this.elements.optionBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const group = btn.closest('.option-selector');
+                group.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        this.elements.startBtn.addEventListener('click', () => this.handleOnboarding());
+
+        // Tabs
+        this.elements.tabs.forEach(tab => {
+            tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+        });
+
+        // Settings
+        this.elements.settingsBtn.addEventListener('click', () => this.openSettingsModal());
+        document.getElementById('closeSettingsModal').addEventListener('click', () => this.closeModal('settingsModal'));
+        document.getElementById('cancelSettingsBtn').addEventListener('click', () => this.closeModal('settingsModal'));
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => this.saveSettings());
+        document.getElementById('deleteAccountBtn').addEventListener('click', () => this.deleteAccount());
+        document.getElementById('exportDataBtn').addEventListener('click', () => this.exportData());
+
+        // Theme Toggles in Settings
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.previewTheme(btn.dataset.theme);
+            });
+        });
+
+        // Tasks
+        document.getElementById('addTaskBtn').addEventListener('click', () => this.openTaskModal());
+        document.getElementById('closeTaskModal').addEventListener('click', () => this.closeModal('taskModal'));
+        document.getElementById('cancelTaskBtn').addEventListener('click', () => this.closeModal('taskModal'));
+        document.getElementById('saveTaskBtn').addEventListener('click', () => this.saveTask());
+
+        // Routines
+        document.getElementById('createRoutineBtn').addEventListener('click', () => this.openRoutineModal());
+        document.getElementById('closeRoutineModal').addEventListener('click', () => this.closeModal('routineModal'));
+        document.getElementById('cancelRoutineBtn').addEventListener('click', () => this.closeModal('routineModal'));
+        document.getElementById('saveRoutineBtn').addEventListener('click', () => this.saveRoutine());
+        document.getElementById('addExerciseToRoutineBtn').addEventListener('click', () => this.addExerciseFieldToRoutineModal());
+
+        // Routine Days Selector
+        document.querySelectorAll('.day-btn').forEach(btn => {
+            btn.addEventListener('click', () => btn.classList.toggle('active'));
+        });
+
+        // Progress Period Selector
+        document.getElementById('periodSelector').addEventListener('change', (e) => this.renderStats(parseInt(e.target.value)));
+    }
+
+    // === State Management ===
     loadState() {
-        const savedState = localStorage.getItem('evoRoutine');
-        if (savedState) {
-            this.state = { ...this.state, ...JSON.parse(savedState) };
-            this.applyTheme();
+        const saved = localStorage.getItem('evoRoutine');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                this.state = { ...this.state, ...parsed };
+                // Ensure settings exist if loading from old state
+                if (!this.state.settings) {
+                    this.state.settings = { theme: 'light', language: 'es', restTime: 60 };
+                }
+            } catch (e) {
+                console.error('Error loading state:', e);
+                localStorage.removeItem('evoRoutine');
+            }
         }
     }
 
@@ -37,917 +163,636 @@ class EvoRoutine {
         localStorage.setItem('evoRoutine', JSON.stringify(this.state));
     }
 
-    // === User Management ===
-    checkUserStatus() {
-        if (this.state.user) {
-            this.showDashboard();
-        } else {
-            this.showWelcome();
+    exportData() {
+        const dataStr = JSON.stringify(this.state, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        const exportFileDefaultName = `evoroutine_backup_${new Date().toISOString().split('T')[0]}.json`;
+
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+
+        alert(this.i18n.t('notif.dataExported'));
+    }
+
+    deleteAccount() {
+        if (confirm(this.i18n.t('settings.deleteConfirm'))) {
+            localStorage.clear();
+            location.reload();
         }
     }
 
-    showWelcome() {
-        document.getElementById('welcomeScreen').style.display = 'flex';
-        document.getElementById('dashboard').style.display = 'none';
-    }
+    // === UI & Theming ===
+    updateUIText() {
+        // Updates all elements with data-i18n attribute
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.innerText = this.i18n.t(el.dataset.i18n);
+        });
 
-    showDashboard() {
-        document.getElementById('welcomeScreen').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            el.placeholder = this.i18n.t(el.dataset.i18nPlaceholder);
+        });
 
-        // Update user profile
-        const userName = document.querySelector('.user-name');
-        if (userName) {
-            userName.textContent = this.state.user.name;
+        // Update date
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const locale = this.state.settings.language === 'es' ? 'es-ES' : 'en-US';
+        if (this.elements.dateDisplay) {
+            this.elements.dateDisplay.innerText = new Date().toLocaleDateString(locale, options);
         }
-
-        // Render initial data
-        this.updateDateDisplay();
-        this.renderTodaysTasks();
-        this.renderRoutines();
-        this.renderProgress();
-        this.generateAdaptiveSuggestions();
     }
 
-    createUser(name, category) {
+    applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        this.state.settings.theme = theme;
+    }
+
+    previewTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    switchTab(tabName) {
+        this.elements.tabs.forEach(tab => {
+            if (tab.dataset.tab === tabName) tab.classList.add('active');
+            else tab.classList.remove('active');
+        });
+
+        this.elements.tabPanes.forEach(pane => {
+            pane.classList.remove('active');
+        });
+        document.getElementById(`${tabName}Pane`).classList.add('active');
+
+        if (tabName === 'progress') {
+            this.renderStats();
+        }
+    }
+
+    // === Onboarding ===
+    handleOnboarding() {
+        const name = this.elements.userNameInput.value.trim();
+        const environment = document.querySelector('[data-option="environment"].active')?.dataset.value;
+        const level = document.querySelector('[data-option="level"].active')?.dataset.value;
+        const goal = document.querySelector('[data-option="goal"].active')?.dataset.value;
+
+        if (!name) return alert(this.i18n.t('error.invalidName'));
+        if (!environment) return alert(this.i18n.t('error.selectEnvironment'));
+        if (!level) return alert(this.i18n.t('error.selectLevel'));
+        if (!goal) return alert(this.i18n.t('error.selectGoal'));
+
         this.state.user = {
             name,
-            primaryCategory: category,
-            createdAt: new Date().toISOString(),
-            stats: {
-                streak: 0,
-                totalCompleted: 0,
-                totalTime: 0
-            }
+            environment,
+            level,
+            goal,
+            createdAt: new Date().toISOString()
         };
 
-        // Create initial routine based on category
-        this.createInitialRoutine(category);
+        // Create initial routine based on selection
+        this.createInitialRoutine();
+
         this.saveState();
         this.showDashboard();
     }
 
-    createInitialRoutine(category) {
-        const templates = {
-            fitness: [
-                { name: 'Calentamiento', duration: 10, priority: 'medium' },
-                { name: 'Entrenamiento principal', duration: 30, priority: 'high' },
-                { name: 'Estiramiento', duration: 10, priority: 'medium' }
-            ],
-            estudio: [
-                { name: 'Revisión de contenido', duration: 25, priority: 'high' },
-                { name: 'Práctica de ejercicios', duration: 30, priority: 'high' },
-                { name: 'Descanso activo', duration: 5, priority: 'low' }
-            ],
-            trabajo: [
-                { name: 'Planificación del día', duration: 15, priority: 'high' },
-                { name: 'Trabajo concentrado', duration: 45, priority: 'high' },
-                { name: 'Revisión de progreso', duration: 10, priority: 'medium' }
-            ],
-            bienestar: [
-                { name: 'Meditación matinal', duration: 15, priority: 'high' },
-                { name: 'Ejercicio ligero', duration: 20, priority: 'medium' },
-                { name: 'Lectura o journaling', duration: 15, priority: 'medium' }
-            ]
-        };
+    createInitialRoutine() {
+        const { environment, level, goal } = this.state.user;
+        const workoutExercises = this.exercises.createWorkout(environment, level, goal);
 
-        const tasks = templates[category] || templates.fitness;
-        const routine = {
-            id: this.generateId(),
-            name: `Rutina ${this.getCategoryName(category)}`,
-            category,
-            days: [1, 2, 3, 4, 5], // Mon-Fri
-            tasks: tasks.map(task => ({
-                ...task,
+        // Map to task format
+        const tasks = workoutExercises.map(ex => {
+            const adjusted = this.exercises.adjustForLevel(ex, level);
+            return {
                 id: this.generateId(),
-                category
-            })),
-            createdAt: new Date().toISOString(),
-            isActive: true
-        };
-
-        this.state.routines.push(routine);
-        this.generateTodaysTasks();
-    }
-
-    // === Task Management ===
-    generateTodaysTasks() {
-        const today = new Date().getDay();
-        const todayRoutines = this.state.routines.filter(r =>
-            r.isActive && r.days.includes(today)
-        );
-
-        const newTasks = [];
-        todayRoutines.forEach(routine => {
-            routine.tasks.forEach(task => {
-                // Check if task already exists for today
-                const existingTask = this.state.tasks.find(t =>
-                    t.routineId === routine.id &&
-                    t.name === task.name &&
-                    this.isToday(t.createdAt)
-                );
-
-                if (!existingTask) {
-                    newTasks.push({
-                        ...task,
-                        id: this.generateId(),
-                        routineId: routine.id,
-                        completed: false,
-                        createdAt: new Date().toISOString()
-                    });
-                }
-            });
+                name: adjusted.name,
+                sets: adjusted.sets,
+                reps: adjusted.reps,
+                weight: 0, // start with bodyweight or 0
+                rest: adjusted.rest,
+                muscle: adjusted.muscle,
+                completed: false
+            };
         });
 
-        this.state.tasks = this.state.tasks.filter(t => this.isToday(t.createdAt));
-        this.state.tasks.push(...newTasks);
-        this.saveState();
-    }
-
-    addTask(taskData) {
-        const task = {
-            id: this.generateId(),
-            name: taskData.name,
-            duration: parseInt(taskData.duration),
-            category: taskData.category,
-            priority: taskData.priority,
-            completed: false,
-            createdAt: new Date().toISOString()
-        };
-
-        this.state.tasks.push(task);
-        this.saveState();
-        this.renderTodaysTasks();
-        this.generateAdaptiveSuggestions();
-    }
-
-    toggleTask(taskId) {
-        const task = this.state.tasks.find(t => t.id === taskId);
-        if (!task) return;
-
-        task.completed = !task.completed;
-
-        if (task.completed) {
-            task.completedAt = new Date().toISOString();
-            this.recordCompletion(task);
-        } else {
-            delete task.completedAt;
-        }
-
-        this.saveState();
-        this.renderTodaysTasks();
-        this.updateDailyScore();
-        this.generateAdaptiveSuggestions();
-    }
-
-    deleteTask(taskId) {
-        this.state.tasks = this.state.tasks.filter(t => t.id !== taskId);
-        this.saveState();
-        this.renderTodaysTasks();
-        this.updateDailyScore();
-    }
-
-    recordCompletion(task) {
-        this.state.history.push({
-            taskId: task.id,
-            taskName: task.name,
-            category: task.category,
-            duration: task.duration,
-            completedAt: task.completedAt,
-            date: new Date().toISOString().split('T')[0]
-        });
-
-        // Update user stats
-        this.state.user.stats.totalCompleted++;
-        this.state.user.stats.totalTime += task.duration;
-        this.updateStreak();
-        this.saveState();
-    }
-
-    // === Routine Management ===
-    createRoutine(routineData) {
         const routine = {
             id: this.generateId(),
-            name: routineData.name,
-            category: routineData.category,
-            days: routineData.days,
-            tasks: [],
-            createdAt: new Date().toISOString(),
+            name: `${this.i18n.t('welcome.' + goal)} - ${this.i18n.t('welcome.' + level)}`,
+            days: [1, 3, 5], // Mon, Wed, Fri default
+            exercises: tasks,
             isActive: true
         };
 
         this.state.routines.push(routine);
-        this.saveState();
+    }
+
+    showWelcomeScreen() {
+        this.elements.welcomeScreen.style.display = 'flex';
+        this.elements.dashboard.style.display = 'none';
+        this.elements.userProfile.style.display = 'none';
+    }
+
+    showDashboard() {
+        this.elements.welcomeScreen.style.display = 'none';
+        this.elements.dashboard.style.display = 'block';
+        this.elements.userProfile.style.display = 'flex';
+        this.elements.userNameDisplay.innerText = this.state.user.name;
+
+        this.checkAndGenerateDailyTasks();
         this.renderRoutines();
     }
 
-    deleteRoutine(routineId) {
-        this.state.routines = this.state.routines.filter(r => r.id !== routineId);
-        this.saveState();
-        this.renderRoutines();
-    }
-
-    // === Adaptive Intelligence ===
-    generateAdaptiveSuggestions() {
-        const suggestions = [];
-        const completedTasks = this.state.tasks.filter(t => t.completed).length;
-        const totalTasks = this.state.tasks.length;
-        const completionRate = totalTasks > 0 ? completedTasks / totalTasks : 0;
-
-        // Time of day analysis
-        const hour = new Date().getHours();
-
-        if (hour >= 18 && completionRate < 0.5) {
-            suggestions.push({
-                id: 'evening-push',
-                icon: '🌙',
-                title: 'Hora de cerrar el día',
-                content: `Tenés ${totalTasks - completedTasks} tareas pendientes. Considerá priorizar las más importantes para mañana.`
-            });
-        }
-
-        if (hour >= 6 && hour < 9 && completionRate === 0) {
-            suggestions.push({
-                id: 'morning-start',
-                icon: '☀️',
-                title: 'Buen momento para empezar',
-                content: 'Las mañanas suelen ser ideales para tareas que requieren concentración. ¿Empezamos?'
-            });
-        }
-
-        // Task duration analysis
-        const totalDuration = this.state.tasks.reduce((sum, t) => sum + (t.duration || 0), 0);
-        const completedDuration = this.state.tasks
-            .filter(t => t.completed)
-            .reduce((sum, t) => sum + (t.duration || 0), 0);
-
-        if (totalDuration > 180 && completionRate < 0.3) {
-            suggestions.push({
-                id: 'overload-warning',
-                icon: '⚠️',
-                title: 'Día demandante detectado',
-                content: `Tu rutina suma ${totalDuration} minutos. Podés reorganizar o posponer tareas menos urgentes.`
-            });
-        }
-
-        // Completion pattern analysis
-        const recentHistory = this.getRecentHistory(7);
-        const avgCompletionRate = this.calculateAverageCompletionRate(recentHistory);
-
-        if (avgCompletionRate > 0.8 && completionRate > 0.8) {
-            suggestions.push({
-                id: 'streak-celebration',
-                icon: '🎉',
-                title: '¡Excelente racha!',
-                content: `Mantuviste más del 80% de cumplimiento esta semana. Considerá agregar un nuevo desafío.`
-            });
-        }
-
-        // Category imbalance detection
-        const categoryDistribution = this.analyzeCategoryDistribution();
-        const primaryCategory = this.state.user?.primaryCategory;
-
-        if (primaryCategory && categoryDistribution[primaryCategory] < 0.3) {
-            suggestions.push({
-                id: 'category-reminder',
-                icon: '🎯',
-                title: 'Recordá tu objetivo principal',
-                content: `Dijiste que querías enfocarte en ${this.getCategoryName(primaryCategory)}. Asegurate de tener tareas relacionadas.`
-            });
-        }
-
-        this.renderSuggestions(suggestions);
-    }
-
-    analyzeCategoryDistribution() {
-        const distribution = {};
-        const totalTasks = this.state.tasks.length;
-
-        if (totalTasks === 0) return {};
-
-        this.state.tasks.forEach(task => {
-            distribution[task.category] = (distribution[task.category] || 0) + 1;
-        });
-
-        Object.keys(distribution).forEach(category => {
-            distribution[category] /= totalTasks;
-        });
-
-        return distribution;
-    }
-
-    calculateAverageCompletionRate(history) {
-        const dayGroups = {};
-
-        history.forEach(record => {
-            const day = record.date;
-            if (!dayGroups[day]) {
-                dayGroups[day] = { completed: 0, total: 0 };
-            }
-            dayGroups[day].completed++;
-            dayGroups[day].total++;
-        });
-
-        const rates = Object.values(dayGroups).map(g => g.completed / g.total);
-        return rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
-    }
-
-    // === Progress Tracking ===
-    updateStreak() {
+    // === Logic: Tasks & Routines ===
+    checkAndGenerateDailyTasks() {
         const today = new Date().toISOString().split('T')[0];
-        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        const dayOfWeek = new Date().getDay(); // 0 = Sun, 1 = Mon...
 
-        const hasCompletedToday = this.state.history.some(h => h.date === today);
-        const hasCompletedYesterday = this.state.history.some(h => h.date === yesterday);
+        // Check if tasks already exist for today
+        const existingTasks = this.state.tasks.some(t => t.date === today);
 
-        if (hasCompletedToday) {
-            if (hasCompletedYesterday || this.state.user.stats.streak === 0) {
-                this.state.user.stats.streak++;
-            }
-        } else if (!hasCompletedYesterday && this.state.user.stats.streak > 0) {
-            this.state.user.stats.streak = 0;
-        }
-    }
+        if (!existingTasks) {
+            // Find active routines for today
+            const activeRoutines = this.state.routines.filter(r =>
+                r.isActive && r.days.includes(dayOfWeek)
+            );
 
-    getRecentHistory(days) {
-        const cutoffDate = new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
-        return this.state.history.filter(h => h.date >= cutoffDate);
-    }
-
-    getWeeklyActivity() {
-        const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-        const today = new Date();
-        const weekData = [];
-
-        for (let i = 6; i >= 0; i--) {
-            const date = new Date(today);
-            date.setDate(date.getDate() - i);
-            const dateStr = date.toISOString().split('T')[0];
-
-            const dayTasks = this.state.history.filter(h => h.date === dateStr);
-            const totalMinutes = dayTasks.reduce((sum, h) => sum + (h.duration || 0), 0);
-
-            weekData.push({
-                day: daysOfWeek[date.getDay()],
-                value: totalMinutes,
-                date: dateStr
-            });
-        }
-
-        return weekData;
-    }
-
-    generateInsights() {
-        const insights = [];
-        const recentHistory = this.getRecentHistory(30);
-
-        // Most productive time analysis
-        const hourDistribution = {};
-        recentHistory.forEach(record => {
-            const hour = new Date(record.completedAt).getHours();
-            hourDistribution[hour] = (hourDistribution[hour] || 0) + 1;
-        });
-
-        const mostProductiveHour = Object.entries(hourDistribution)
-            .sort(([, a], [, b]) => b - a)[0];
-
-        if (mostProductiveHour) {
-            const [hour, count] = mostProductiveHour;
-            insights.push({
-                icon: '⏰',
-                title: 'Tu mejor momento',
-                description: `Completás más tareas alrededor de las ${hour}:00hs. Programá tus actividades más importantes en ese horario.`
-            });
-        }
-
-        // Category expertise
-        const categoryStats = {};
-        recentHistory.forEach(record => {
-            if (!categoryStats[record.category]) {
-                categoryStats[record.category] = { count: 0, time: 0 };
-            }
-            categoryStats[record.category].count++;
-            categoryStats[record.category].time += record.duration;
-        });
-
-        const topCategory = Object.entries(categoryStats)
-            .sort(([, a], [, b]) => b.count - a.count)[0];
-
-        if (topCategory) {
-            const [category, stats] = topCategory;
-            insights.push({
-                icon: this.getCategoryIcon(category),
-                title: 'Tu fuerte',
-                description: `Has dedicado ${stats.time} minutos a ${this.getCategoryName(category)} en el último mes. ¡Seguí así!`
-            });
-        }
-
-        // Improvement trend
-        const firstWeek = this.getRecentHistory(30).slice(0, 7);
-        const lastWeek = this.getRecentHistory(7);
-
-        if (firstWeek.length > 0 && lastWeek.length > 0) {
-            const firstWeekAvg = firstWeek.length / 7;
-            const lastWeekAvg = lastWeek.length / 7;
-            const improvement = ((lastWeekAvg - firstWeekAvg) / firstWeekAvg) * 100;
-
-            if (improvement > 10) {
-                insights.push({
-                    icon: '📈',
-                    title: 'Tendencia positiva',
-                    description: `Tu productividad aumentó un ${improvement.toFixed(0)}% comparado con hace 3 semanas.`
+            activeRoutines.forEach(routine => {
+                routine.exercises.forEach(ex => {
+                    this.state.tasks.push({
+                        ...ex,
+                        id: this.generateId(),
+                        date: today,
+                        completed: false,
+                        routineId: routine.id
+                    });
                 });
-            }
+            });
+
+            this.saveState();
         }
 
-        return insights;
+        this.renderTodayTasks();
     }
 
-    // === Rendering ===
-    updateDateDisplay() {
-        const dateDisplay = document.getElementById('dateDisplay');
-        if (!dateDisplay) return;
+    renderTodayTasks() {
+        const today = new Date().toISOString().split('T')[0];
+        const tasksToday = this.state.tasks.filter(t => t.date === today);
 
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const date = new Date().toLocaleDateString('es-AR', options);
-        dateDisplay.textContent = date.charAt(0).toUpperCase() + date.slice(1);
-    }
+        this.elements.tasksContainer.innerHTML = '';
 
-    renderTodaysTasks() {
-        const container = document.getElementById('tasksToday');
-        if (!container) return;
-
-        if (this.state.tasks.length === 0) {
-            container.innerHTML = `
+        if (tasksToday.length === 0) {
+            this.elements.tasksContainer.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-icon">📋</div>
-                    <div class="empty-state-title">No hay tareas para hoy</div>
-                    <div class="empty-state-description">Creá una nueva tarea o configurá una rutina</div>
+                    <div class="empty-state-icon">💤</div>
+                    <div class="empty-state-title">${this.i18n.t('today.noTasks')}</div>
+                    <p class="empty-state-desc">${this.i18n.t('today.noTasksDesc')}</p>
                 </div>
             `;
+            this.updateDailyScore(0, 0);
             return;
         }
 
-        container.innerHTML = this.state.tasks.map(task => `
-            <div class="task-item ${task.completed ? 'completed' : ''}">
-                <div class="task-checkbox ${task.completed ? 'checked' : ''}" data-task-id="${task.id}">
-                    ${task.completed ? `
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    ` : ''}
+        tasksToday.forEach(task => {
+            const taskEl = document.createElement('div');
+            taskEl.className = `task-item ${task.completed ? 'completed' : ''}`;
+            taskEl.innerHTML = `
+                <div class="task-checkbox ${task.completed ? 'checked' : ''}" data-id="${task.id}">
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
                 <div class="task-content">
                     <div class="task-title">${task.name}</div>
                     <div class="task-meta">
-                        <span class="task-category">
-                            ${this.getCategoryIcon(task.category)}
-                            ${this.getCategoryName(task.category)}
-                        </span>
-                        ${task.duration ? `
-                            <span class="task-duration">
-                                ⏱️ ${task.duration} min
-                            </span>
-                        ` : ''}
-                        ${task.priority ? `
-                            <span class="priority-badge ${task.priority}">${task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Media' : 'Baja'}</span>
-                        ` : ''}
+                        ${task.sets ? `<span class="task-badge">${task.sets} ${this.i18n.t('task.sets')}</span>` : ''}
+                        ${task.reps ? `<span class="task-badge">${task.reps} ${this.i18n.t('task.reps')}</span>` : ''}
+                        ${task.weight > 0 ? `<span class="task-badge">${task.weight} ${this.i18n.t('task.weight')}</span>` : ''}
+                        ${task.muscle ? `<span class="task-badge">${this.i18n.t('muscle.' + task.muscle)}</span>` : ''}
                     </div>
                 </div>
                 <div class="task-actions">
-                    <button class="task-action-btn" data-action="delete" data-task-id="${task.id}">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-
-        this.updateDailyScore();
-        this.attachTaskEventListeners();
-    }
-
-    renderSuggestions(suggestions) {
-        const container = document.getElementById('suggestions');
-        if (!container || suggestions.length === 0) {
-            if (container) container.innerHTML = '';
-            return;
-        }
-
-        container.innerHTML = `
-            <h3 style="margin-bottom: var(--spacing-lg); font-size: 1.125rem; font-weight: 600;">
-                💡 Sugerencias adaptativas
-            </h3>
-            ${suggestions.map(s => `
-                <div class="suggestion-card">
-                    <div class="suggestion-header">
-                        <span class="suggestion-icon">${s.icon}</span>
-                        <span class="suggestion-title">${s.title}</span>
-                    </div>
-                    <div class="suggestion-content">${s.content}</div>
-                </div>
-            `).join('')}
-        `;
-    }
-
-    renderRoutines() {
-        const container = document.getElementById('routinesGrid');
-        if (!container) return;
-
-        if (this.state.routines.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon">📅</div>
-                    <div class="empty-state-title">No tenés rutinas creadas</div>
-                    <div class="empty-state-description">Creá tu primera rutina para organizar tu evolución</div>
+                    <button class="task-action-btn edit-task" data-id="${task.id}">✎</button>
+                    <button class="task-action-btn delete-task" data-id="${task.id}">✕</button>
                 </div>
             `;
-            return;
-        }
 
-        container.innerHTML = this.state.routines.map(routine => `
-            <div class="routine-card">
-                <div class="routine-header">
-                    <div class="routine-icon">${this.getCategoryIcon(routine.category)}</div>
-                </div>
-                <div class="routine-name">${routine.name}</div>
-                <div class="routine-stats">
-                    <span>${routine.tasks.length} tareas</span>
-                    <span>${routine.tasks.reduce((sum, t) => sum + (t.duration || 0), 0)} min</span>
-                </div>
-                <div class="routine-days">
-                    ${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => `
-                        <div class="day-indicator ${routine.days.includes(i === 6 ? 0 : i + 1) ? 'active' : ''}">
-                            ${day}
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `).join('');
-    }
+            // Interaction Listeners
+            taskEl.querySelector('.task-checkbox').addEventListener('click', () => this.toggleTaskCompletion(task.id));
+            taskEl.querySelector('.delete-task').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteTask(task.id);
+            });
+            taskEl.querySelector('.edit-task').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.editTask(task.id);
+            });
 
-    renderProgress() {
-        // Render stats
-        document.getElementById('streakValue').textContent = this.state.user?.stats.streak || 0;
-        document.getElementById('completedValue').textContent = this.state.user?.stats.totalCompleted || 0;
-
-        const hours = Math.floor((this.state.user?.stats.totalTime || 0) / 60);
-        const minutes = (this.state.user?.stats.totalTime || 0) % 60;
-        document.getElementById('timeValue').textContent = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-
-        const recentHistory = this.getRecentHistory(7);
-        const oldHistory = this.state.history.filter(h => {
-            const cutoff = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
-            const twoWeeksAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
-            return h.date >= cutoff && h.date < twoWeeksAgo;
+            this.elements.tasksContainer.appendChild(taskEl);
         });
 
-        const improvement = oldHistory.length > 0
-            ? ((recentHistory.length - oldHistory.length) / oldHistory.length * 100)
-            : (recentHistory.length > 0 ? 100 : 0);
+        // Update Score
+        const completedCount = tasksToday.filter(t => t.completed).length;
+        this.updateDailyScore(completedCount, tasksToday.length);
 
-        document.getElementById('improvementValue').textContent = `${improvement > 0 ? '+' : ''}${improvement.toFixed(0)}%`;
-
-        // Render activity chart
-        this.renderActivityChart();
-
-        // Render insights
-        this.renderInsights();
+        // Generate Adaptive Suggestions
+        this.generateAdaptiveSuggestions(tasksToday);
     }
 
-    renderActivityChart() {
-        const container = document.getElementById('activityChart');
-        if (!container) return;
+    toggleTaskCompletion(taskId) {
+        const task = this.state.tasks.find(t => t.id === taskId);
+        if (task) {
+            task.completed = !task.completed;
 
-        const weekData = this.getWeeklyActivity();
-        const maxValue = Math.max(...weekData.map(d => d.value), 1);
+            if (task.completed) {
+                // Add to history
+                this.state.history.push({
+                    taskId: task.id,
+                    name: task.name,
+                    completedAt: new Date().toISOString(),
+                    weight: task.weight,
+                    sets: task.sets,
+                    reps: task.reps
+                });
+            } else {
+                // Remove last entry from history for this task
+                // For simplicity, we just filter it out logic here could be more complex
+                this.state.history = this.state.history.filter(h => h.taskId !== taskId || h.completedAt.split('T')[0] !== new Date().toISOString().split('T')[0]);
+            }
 
-        container.innerHTML = weekData.map(day => {
-            const height = (day.value / maxValue) * 100;
-            return `
-                <div class="chart-bar" style="height: ${height}%" title="${day.day}: ${day.value} min">
-                    <div class="chart-bar-label">${day.day}</div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    renderInsights() {
-        const container = document.getElementById('insightsList');
-        if (!container) return;
-
-        const insights = this.generateInsights();
-
-        if (insights.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon">📊</div>
-                    <div class="empty-state-description">Completá más tareas para ver insights personalizados</div>
-                </div>
-            `;
-            return;
+            this.saveState();
+            this.renderTodayTasks(); // Re-render to update UI and stats
         }
-
-        container.innerHTML = insights.map(insight => `
-            <div class="insight-item">
-                <div class="insight-icon">${insight.icon}</div>
-                <div class="insight-content">
-                    <div class="insight-title">${insight.title}</div>
-                    <div class="insight-description">${insight.description}</div>
-                </div>
-            </div>
-        `).join('');
     }
 
-    updateDailyScore() {
-        const scoreCircle = document.getElementById('scoreCircle');
-        const scoreValue = document.getElementById('scoreValue');
+    deleteTask(taskId) {
+        if (confirm(this.i18n.t('modal.confirm'))) {
+            this.state.tasks = this.state.tasks.filter(t => t.id !== taskId);
+            this.saveState();
+            this.renderTodayTasks();
+        }
+    }
 
-        if (!scoreCircle || !scoreValue) return;
+    updateDailyScore(completed, total) {
+        const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+        this.elements.scoreValue.innerText = `${percentage}%`;
 
-        const completed = this.state.tasks.filter(t => t.completed).length;
-        const total = this.state.tasks.length;
-        const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-
+        // Update circle stroke offset (282.7 is usually full circumference for r=45)
         const circumference = 282.7;
         const offset = circumference - (percentage / 100) * circumference;
-
-        scoreCircle.style.strokeDashoffset = offset;
-        scoreValue.textContent = `${percentage}%`;
+        this.elements.scoreCircle.style.strokeDashoffset = offset;
     }
 
-    // === Event Listeners ===
-    setupEventListeners() {
-        // Welcome screen
-        document.getElementById('startBtn')?.addEventListener('click', () => {
-            const name = document.getElementById('userName')?.value.trim();
-            const selectedCategory = document.querySelector('.category-btn.active');
-
-            if (!name) {
-                alert('Por favor, ingresá tu nombre');
-                return;
-            }
-
-            if (!selectedCategory) {
-                alert('Por favor, seleccioná una categoría');
-                return;
-            }
-
-            this.createUser(name, selectedCategory.dataset.category);
-        });
-
-        // Category buttons
-        document.querySelectorAll('.category-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
-
-        // Theme toggle
-        document.getElementById('themeToggle')?.addEventListener('click', () => {
-            this.toggleTheme();
-        });
-
-        // Tab navigation
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.dataset.tab;
-                this.switchTab(tabName);
-            });
-        });
-
-        // Add task button
-        document.getElementById('addTaskBtn')?.addEventListener('click', () => {
-            this.openTaskModal();
-        });
-
-        // Task modal
-        document.getElementById('closeTaskModal')?.addEventListener('click', () => {
-            this.closeTaskModal();
-        });
-
-        document.getElementById('cancelTaskBtn')?.addEventListener('click', () => {
-            this.closeTaskModal();
-        });
-
-        document.getElementById('saveTaskBtn')?.addEventListener('click', () => {
-            this.saveTask();
-        });
-
-        // Priority buttons
-        document.querySelectorAll('.priority-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
-
-        // Create routine button
-        document.getElementById('createRoutineBtn')?.addEventListener('click', () => {
-            this.openRoutineModal();
-        });
-
-        // Routine modal
-        document.getElementById('closeRoutineModal')?.addEventListener('click', () => {
-            this.closeRoutineModal();
-        });
-
-        document.getElementById('cancelRoutineBtn')?.addEventListener('click', () => {
-            this.closeRoutineModal();
-        });
-
-        document.getElementById('saveRoutineBtn')?.addEventListener('click', () => {
-            this.saveRoutine();
-        });
-
-        // Day buttons
-        document.querySelectorAll('.day-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                btn.classList.toggle('active');
-            });
-        });
-
-        // Period selector
-        document.getElementById('periodSelector')?.addEventListener('change', (e) => {
-            // Could implement different time ranges for progress
-            this.renderProgress();
-        });
-
-        // Close modals on backdrop click
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
-            });
-        });
-
-        // Generate tasks daily
-        this.checkAndGenerateDailyTasks();
-    }
-
-    attachTaskEventListeners() {
-        // Task checkboxes
-        document.querySelectorAll('.task-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('click', (e) => {
-                const taskId = checkbox.dataset.taskId;
-                this.toggleTask(taskId);
-            });
-        });
-
-        // Task actions
-        document.querySelectorAll('.task-action-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const action = btn.dataset.action;
-                const taskId = btn.dataset.taskId;
-
-                if (action === 'delete') {
-                    if (confirm('¿Eliminar esta tarea?')) {
-                        this.deleteTask(taskId);
-                    }
-                }
-            });
-        });
-    }
-
-    checkAndGenerateDailyTasks() {
-        const lastGenerated = localStorage.getItem('lastTaskGeneration');
-        const today = new Date().toISOString().split('T')[0];
-
-        if (lastGenerated !== today && this.state.user) {
-            this.generateTodaysTasks();
-            localStorage.setItem('lastTaskGeneration', today);
-        }
-
-        // Check again tomorrow
-        const now = new Date();
-        const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-        const timeUntilTomorrow = tomorrow - now;
-
-        setTimeout(() => {
-            this.checkAndGenerateDailyTasks();
-        }, timeUntilTomorrow);
-    }
-
-    // === Modal Management ===
-    openTaskModal() {
-        document.getElementById('taskModal').classList.add('active');
-        document.getElementById('taskName').focus();
-    }
-
-    closeTaskModal() {
-        document.getElementById('taskModal').classList.remove('active');
-        document.getElementById('taskName').value = '';
-        document.getElementById('taskDuration').value = '';
-    }
-
-    saveTask() {
-        const name = document.getElementById('taskName').value.trim();
-        const duration = document.getElementById('taskDuration').value;
-        const category = document.getElementById('taskCategory').value;
-        const priority = document.querySelector('.priority-btn.active')?.dataset.priority || 'medium';
-
-        if (!name) {
-            alert('Por favor, ingresá el nombre de la tarea');
-            return;
-        }
-
-        this.addTask({ name, duration, category, priority });
-        this.closeTaskModal();
-    }
-
-    openRoutineModal() {
-        document.getElementById('routineModal').classList.add('active');
-        document.getElementById('routineName').focus();
-    }
-
-    closeRoutineModal() {
-        document.getElementById('routineModal').classList.remove('active');
-        document.getElementById('routineName').value = '';
-        document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
-    }
-
-    saveRoutine() {
-        const name = document.getElementById('routineName').value.trim();
-        const category = document.getElementById('routineCategory').value;
-        const days = Array.from(document.querySelectorAll('.day-btn.active'))
-            .map(btn => parseInt(btn.dataset.day));
-
-        if (!name) {
-            alert('Por favor, ingresá el nombre de la rutina');
-            return;
-        }
-
-        if (days.length === 0) {
-            alert('Por favor, seleccioná al menos un día');
-            return;
-        }
-
-        this.createRoutine({ name, category, days });
-        this.closeRoutineModal();
-    }
-
-    // === UI Helpers ===
-    switchTab(tabName) {
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
-
-        document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
-        document.getElementById(`${tabName}Pane`)?.classList.add('active');
-
-        if (tabName === 'progress') {
-            this.renderProgress();
-        }
-    }
-
-    toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-        this.state.settings.theme = newTheme;
-        this.applyTheme();
-        this.saveState();
-    }
-
-    applyTheme() {
-        document.documentElement.setAttribute('data-theme', this.state.settings.theme);
-    }
-
-    // === Utility Functions ===
+    // === Helpers ===
     generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     }
 
-    isToday(dateString) {
-        const today = new Date().toISOString().split('T')[0];
-        const date = new Date(dateString).toISOString().split('T')[0];
-        return date === today;
+    closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
     }
 
-    getCategoryName(category) {
-        const names = {
-            fitness: 'Fitness',
-            estudio: 'Estudio',
-            trabajo: 'Trabajo',
-            bienestar: 'Bienestar'
-        };
-        return names[category] || category;
+    closeAllModals() {
+        document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
     }
 
-    getCategoryIcon(category) {
-        const icons = {
-            fitness: '💪',
-            estudio: '📚',
-            trabajo: '💼',
-            bienestar: '🧘'
+    // === Modals: Settings ===
+    openSettingsModal() {
+        const modal = this.elements.settingsModal;
+
+        // Load current values
+        document.getElementById('settingsName').value = this.state.user.name;
+        document.getElementById('languageSelector').value = this.state.settings.language;
+        document.getElementById('settingsEnvironment').value = this.state.user.environment;
+        document.getElementById('settingsLevel').value = this.state.user.level;
+        document.getElementById('settingsGoal').value = this.state.user.goal;
+        document.getElementById('restTime').value = this.state.settings.restTime;
+
+        // Set Theme active state
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            if (btn.dataset.theme === this.state.settings.theme) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+
+        modal.classList.add('active');
+    }
+
+    saveSettings() {
+        const newLang = document.getElementById('languageSelector').value;
+        const newTheme = document.querySelector('.theme-btn.active').dataset.theme;
+
+        // Save Settings
+        this.state.settings.language = newLang;
+        this.state.settings.theme = newTheme;
+        this.state.settings.restTime = parseInt(document.getElementById('restTime').value);
+
+        // Save User Data
+        this.state.user.name = document.getElementById('settingsName').value;
+        this.state.user.environment = document.getElementById('settingsEnvironment').value;
+        this.state.user.level = document.getElementById('settingsLevel').value;
+        this.state.user.goal = document.getElementById('settingsGoal').value;
+
+        this.saveState();
+        this.applyTheme(newTheme);
+        this.i18n.setLanguage(newLang);
+        this.updateUIText();
+        this.elements.userNameDisplay.innerText = this.state.user.name;
+
+        this.closeModal('settingsModal');
+    }
+
+    // === Routines UI ===
+    renderRoutines() {
+        const container = this.elements.routinesGrid;
+        container.innerHTML = '';
+
+        if (this.state.routines.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <p>${this.i18n.t('routines.noRoutinesDesc')}</p>
+                </div>
+            `;
+            return;
+        }
+
+        this.state.routines.forEach(routine => {
+            const card = document.createElement('div');
+            card.className = 'routine-card';
+
+            const daysHtml = [1, 2, 3, 4, 5, 6, 0].map(day => {
+                const dayName = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][day];
+                const isActive = routine.days.includes(day);
+                return `<span class="day-indicator ${isActive ? 'active' : ''}">${this.i18n.t('day.' + dayName).charAt(0)}</span>`;
+            }).join('');
+
+            card.innerHTML = `
+                <div class="routine-header">
+                    <div class="routine-icon">💪</div>
+                    ${routine.isActive ? `<span class="routine-status">${this.i18n.t('routines.active')}</span>` : ''}
+                </div>
+                <div class="routine-name">${routine.name}</div>
+                <div class="routine-stats">
+                    <span>${routine.exercises.length} ${this.i18n.t('routines.tasks')}</span>
+                    <span>${routine.exercises.reduce((acc, ex) => acc + (ex.rest || 60) * (ex.sets || 3), 0) / 60 | 0} ${this.i18n.t('routines.duration')}</span>
+                </div>
+                <div class="routine-days">${daysHtml}</div>
+                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                     <button class="btn-sm btn-secondary delete-routine-btn" data-id="${routine.id}">${this.i18n.t('routines.delete')}</button>
+                </div>
+            `;
+
+            card.querySelector('.delete-routine-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm(this.i18n.t('modal.confirm'))) {
+                    this.state.routines = this.state.routines.filter(r => r.id !== routine.id);
+                    this.saveState();
+                    this.renderRoutines();
+                    this.checkAndGenerateDailyTasks(); // update tasks if routine deleted
+                }
+            });
+
+            container.appendChild(card);
+        });
+    }
+
+    openRoutineModal() {
+        document.getElementById('routineName').value = '';
+        document.getElementById('routineExercisesList').innerHTML = '';
+        document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+        this.elements.routineModal.classList.add('active');
+    }
+
+    saveRoutine() {
+        const name = document.getElementById('routineName').value;
+        const selectedDays = Array.from(document.querySelectorAll('.day-btn.active')).map(b => parseInt(b.dataset.day));
+
+        // This is a simplified version - in a real app better exercise picking UI is needed
+        // Here we just use what was in the list inputs
+        const exercises = [];
+        document.querySelectorAll('.routine-exercise-item').forEach(item => {
+            exercises.push({
+                name: item.querySelector('.ex-name').value,
+                sets: parseInt(item.querySelector('.ex-sets').value) || 3,
+                reps: parseInt(item.querySelector('.ex-reps').value) || 12,
+                weight: parseInt(item.querySelector('.ex-weight').value) || 0,
+                rest: this.state.settings.restTime
+            });
+        });
+
+        if (!name) return alert(this.i18n.t('error.invalidName'));
+
+        const newRoutine = {
+            id: this.generateId(),
+            name,
+            days: selectedDays,
+            exercises,
+            isActive: true
         };
-        return icons[category] || '📌';
+
+        this.state.routines.push(newRoutine);
+        this.saveState();
+        this.renderRoutines();
+        this.checkAndGenerateDailyTasks();
+        this.closeModal('routineModal');
+    }
+
+    addExerciseFieldToRoutineModal() {
+        const container = document.getElementById('routineExercisesList');
+        const div = document.createElement('div');
+        div.className = 'exercise-item';
+        div.innerHTML = `
+            <input type="text" class="input-field ex-name" placeholder="${this.i18n.t('taskModal.name')}" style="flex:2">
+            <input type="number" class="input-field ex-sets" placeholder="${this.i18n.t('taskModal.sets')}" style="flex:1">
+            <input type="number" class="input-field ex-reps" placeholder="${this.i18n.t('taskModal.reps')}" style="flex:1">
+            <input type="number" class="input-field ex-weight" placeholder="kg" style="flex:1">
+        `;
+        container.appendChild(div);
+    }
+
+    // === Task Modal ===
+    openTaskModal() {
+        document.getElementById('taskName').value = '';
+        document.getElementById('taskSets').value = '';
+        document.getElementById('taskReps').value = '';
+        document.getElementById('taskWeight').value = '';
+        document.getElementById('taskRest').value = this.state.settings.restTime;
+        document.getElementById('taskNotes').value = '';
+        this.elements.taskModal.classList.add('active');
+    }
+
+    saveTask() {
+        const task = {
+            id: this.generateId(),
+            date: new Date().toISOString().split('T')[0],
+            name: document.getElementById('taskName').value,
+            sets: parseInt(document.getElementById('taskSets').value) || 3,
+            reps: parseInt(document.getElementById('taskReps').value) || 10,
+            weight: parseFloat(document.getElementById('taskWeight').value) || 0,
+            rest: parseInt(document.getElementById('taskRest').value) || 60,
+            completed: false
+        };
+
+        if (!task.name) return;
+
+        this.state.tasks.push(task);
+        this.saveState();
+        this.renderTodayTasks();
+        this.closeModal('taskModal');
+    }
+
+    // === Progress & Insights (ML Simple based on Rules) ===
+    renderStats(period = 7) {
+        // Simple analytics logic
+        const now = new Date();
+        const stats = {
+            streak: 0,
+            completed: 0,
+            minutes: 0,
+            improvement: 0
+        };
+
+        // Calculate Streak
+        // (Simplified streak logic for demo) 
+        let currentStreak = 0;
+        // Logic would iterate backwards checking history dates
+        // For UI demo purposes we just count unique days in history
+        const uniqueDays = new Set(this.state.history.map(h => h.completedAt.split('T')[0]));
+        stats.streak = uniqueDays.size;
+
+        // Stats for Period
+        const historyInPeriod = this.state.history.filter(h => {
+            const date = new Date(h.completedAt);
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= period;
+        });
+
+        stats.completed = historyInPeriod.length;
+        // Estimate minutes (avg task 10 min if not tracked) or sum rest + time under tension
+        stats.minutes = historyInPeriod.length * 10;
+
+        // Update DOM
+        document.getElementById('streakValue').innerText = stats.streak;
+        document.getElementById('completedValue').innerText = stats.completed;
+        document.getElementById('timeValue').innerText = `${stats.minutes}m`;
+        document.getElementById('improvementValue').innerText = `+${Math.min(100, stats.completed * 5)}%`;
+
+        this.renderActivityChart(period);
+        this.renderInsights(historyInPeriod);
+    }
+
+    renderActivityChart(period) {
+        const container = document.getElementById('activityChart');
+        container.innerHTML = '';
+
+        // Generate last 7 days keys
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            days.push(d.toISOString().split('T')[0]);
+        }
+
+        days.forEach(day => {
+            const count = this.state.history.filter(h => h.completedAt.startsWith(day)).length;
+            const max = 10; // scale
+            const height = Math.min(100, (count / max) * 100);
+
+            const dayLabel = new Date(day).toLocaleDateString(
+                this.state.settings.language === 'es' ? 'es-ES' : 'en-US',
+                { weekday: 'short' }
+            );
+
+            const bar = document.createElement('div');
+            bar.style.display = 'flex';
+            bar.style.flexDirection = 'column';
+            bar.style.alignItems = 'center';
+            bar.style.flex = '1';
+
+            bar.innerHTML = `
+                <div class="chart-bar" style="height: ${height || 5}%; width: 20px;"></div>
+                <div class="chart-label">${dayLabel}</div>
+            `;
+            container.appendChild(bar);
+        });
+    }
+
+    renderInsights(history) {
+        const container = document.getElementById('insightsList');
+        container.innerHTML = '';
+
+        const insights = [];
+
+        // Rules Engine
+        // 1. Time of Day
+        if (history.length > 5) {
+            const hours = history.map(h => new Date(h.completedAt).getHours());
+            const avgHour = hours.reduce((a, b) => a + b, 0) / hours.length;
+            insights.push({
+                title: this.i18n.t('insight.bestTime.title'),
+                desc: this.i18n.t('insight.bestTime.desc', { time: Math.round(avgHour) + ':00' })
+            });
+        }
+
+        // 2. Strong Category
+        if (history.length > 0) {
+            insights.push({
+                title: this.i18n.t('insight.topCategory.title'),
+                desc: this.i18n.t('insight.topCategory.desc', {
+                    time: history.length * 15,
+                    type: this.state.user.goal
+                })
+            });
+        }
+
+        // 3. Consistency
+        if (this.state.user.level === 'beginner' && history.length > 3) {
+            insights.push({
+                title: this.i18n.t('insight.consistency.title'),
+                desc: this.i18n.t('insight.consistency.desc', { rate: 90 })
+            });
+        }
+
+        if (insights.length === 0) {
+            container.innerHTML = `<p class="text-muted">${this.i18n.t('progress.noInsights')}</p>`;
+            return;
+        }
+
+        insights.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'insight-card';
+            div.innerHTML = `<h4>${item.title}</h4><p>${item.desc}</p>`;
+            container.appendChild(div);
+        });
+    }
+
+    generateAdaptiveSuggestions(todaysTasks) {
+        const container = document.getElementById('suggestions');
+        container.innerHTML = '';
+
+        if (todaysTasks.length === 0) return;
+
+        // Simple suggestion logic
+        const hour = new Date().getHours();
+        const pending = todaysTasks.filter(t => !t.completed).length;
+
+        if (hour < 10) {
+            this.addSuggestion(container, 'insight.morningStart', { icon: '🌅' });
+        } else if (hour > 20 && pending > 0) {
+            this.addSuggestion(container, 'insight.eveningPush', { pending, icon: '🌙' });
+        }
+    }
+
+    addSuggestion(container, key, params) {
+        const div = document.createElement('div');
+        div.className = 'suggestion-card';
+        div.innerHTML = `
+            <div class="suggestion-header">
+                <span class="suggestion-icon">${params.icon || '💡'}</span>
+                <span class="suggestion-title">${this.i18n.t(key + '.title')}</span>
+            </div>
+            <div class="suggestion-content">${this.i18n.t(key + '.desc', params)}</div>
+        `;
+        container.appendChild(div);
     }
 }
 
-// Initialize app
-const app = new EvoRoutine();
+// Initialize Application
+document.addEventListener('DOMContentLoaded', () => {
+    window.app = new EvoRoutineApp();
+});
