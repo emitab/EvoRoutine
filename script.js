@@ -23,7 +23,7 @@ const I18n = {
         en: {
             "app.title": "EvoRoutine", "app.tagline": "Evolve Locally.",
             "auth.join": "Join the Evolution", "auth.name": "Your Name", "auth.email": "Your Email", "auth.start": "Start Journey", "auth.rec": "Have an account?", "auth.login": "Login",
-            "hub.hi": "Welcome back,", "hub.streak": "Streak", "hub.sess": "Sessions", "hub.gen": "Generate Workout",
+            "hub.hi": "Welcome back,", "hub.streak": "Streak", "hub.sess": "Sessions", "hub.gen": "Generate Workout", "hub.history": "Recent Activity",
             "sess.set": "Set", "sess.finish": "Finish Workout", "sess.copy": "Workout Copied!",
             "rpe.title": "How did that feel?", "rpe.1": "Too Easy", "rpe.2": "Good", "rpe.3": "Hard", "rpe.4": "Failure",
             "sett.title": "Settings", "sett.lang": "Language", "sett.theme": "Theme",
@@ -81,7 +81,7 @@ const I18n = {
         es: {
             "app.title": "EvoRoutine", "app.tagline": "Evoluciona Localmente.",
             "auth.join": "Únete a la Evolución", "auth.name": "Tu Nombre", "auth.email": "Tu Correo", "auth.start": "Comenzar", "auth.rec": "¿Ya tienes cuenta?", "auth.login": "Entrar",
-            "hub.hi": "Hola,", "hub.streak": "Racha", "hub.sess": "Sesiones", "hub.gen": "Generar Rutina",
+            "hub.hi": "Hola,", "hub.streak": "Racha", "hub.sess": "Sesiones", "hub.gen": "Generar Rutina", "hub.history": "Actividad Reciente",
             "sess.set": "Serie", "sess.finish": "Terminar Rutina", "sess.copy": "¡Rutina copiada!",
             "rpe.title": "¿Qué tal se sintió?", "rpe.1": "Muy Fácil", "rpe.2": "Bien", "rpe.3": "Duro", "rpe.4": "Fallo",
             "sett.title": "Ajustes", "sett.lang": "Idioma", "sett.theme": "Tema",
@@ -356,6 +356,37 @@ window.App = {
         UI.text('goal-label', goalKey.toUpperCase());
         UI.text('goal-desc', I18n.t(`goal.${goalKey}.d`));
         UI.renderApp();
+
+        // Render History
+        const list = document.getElementById('history-list');
+        const title = document.getElementById('hist-title');
+        list.innerHTML = '';
+
+        if (!App.user.history || App.user.history.length === 0) {
+            title.style.display = 'none';
+        } else {
+            title.style.display = 'block';
+            // Show last 5 sessions, newest first
+            const recent = [...App.user.history].reverse().slice(0, 5);
+
+            recent.forEach(sess => {
+                const date = new Date(sess.date).toLocaleDateString();
+                const totalSets = sess.routine.reduce((acc, ex) => acc + ex.sets, 0);
+                const exCount = sess.routine.length;
+
+                const el = document.createElement('div');
+                el.className = 'history-item animate-in';
+                el.innerHTML = `
+                    <div class="h-date">${date}</div>
+                    <div class="h-info">
+                        <strong>${exCount} Exercises</strong>
+                        <small>${totalSets} Sets Completed</small>
+                    </div>
+                    <div class="h-icon">✓</div>
+                `;
+                list.appendChild(el);
+            });
+        }
     },
 
     loadSettings: () => {

@@ -892,3 +892,60 @@ body {
         font-size: 1.5rem;
     }
 }
+
+.history-item {
+    display: flex;
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    transition: transform 0.2s var(--ease);
+}
+
+.history-item:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+}
+
+.h-date {
+    background: var(--bg);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-right: 16px;
+    min-width: 80px;
+    text-align: center;
+}
+
+.h-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.h-info strong {
+    font-size: 0.95rem;
+    color: var(--text);
+}
+
+.h-info small {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.h-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-glow);
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1rem;
+}
