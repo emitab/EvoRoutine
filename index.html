@@ -1,587 +1,280 @@
-<!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="EvoRoutine - Tu evolución, día a día. Rutinas personalizadas con adaptación inteligente.">
-    <title>EvoRoutine - Tu evolución, día a día</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#09090b">
+    <title>EvoRoutine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&amp;display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+
+    <!-- Firebase SDK (v9 - Modular) -->
+    <!-- Removed for local version simplicity as per user request -->
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // navigator.serviceWorker.register('./sw.js');
+            });
+        }
+    </script>
 </head>
 
-<body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <svg viewBox="0 0 40 40" class="logo-icon">
-                        <circle cx="20" cy="20" r="18" fill="none" stroke="url(#gradient)" stroke-width="3"
-                            stroke-dasharray="85 15" />
-                        <path d="M15 20 L17 15 L19 22 L21 16 L23 20 L25 18" fill="none" stroke="url(#gradient)"
-                            stroke-width="2.5" />
-                        <defs>
-                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#0ea5e9" />
-                                <stop offset="100%" style="stop-color:#06b6d4" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <span class="logo-text">EvoRoutine</span>
-                </div>
-                <div class="header-actions">
-                    <button class="btn-icon" id="settingsBtn" aria-label="Settings" data-i18n="header.settings">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="12" cy="12" r="3" />
-                            <path
-                                d="M12 1v6m0 6v6m-8-7h6m6 0h6M6.34 6.34l4.24 4.24m5.66 5.66l4.24 4.24M6.34 17.66l4.24-4.24m5.66-5.66l4.24-4.24" />
-                        </svg>
-                    </button>
-                    <div class="user-profile" id="userProfile" style="display: none;">
-                        <div class="avatar">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                            </svg>
-                        </div>
-                        <span class="user-name"></span>
-                    </div>
-                </div>
+<body class="theme-dark">
+
+    <!-- VIEW: AUTH -->
+    <section id="v-auth" class="view active">
+        <div class="center-content">
+            <div class="logo-hero">
+                <img src="logo.png" alt="EvoRoutine" class="logo-img">
+                <h1 data-bind="app.title">EvoRoutine</h1>
+                <p data-bind="app.tagline" class="fade-text">Evolve Locally.</p>
+            </div>
+
+            <div id="auth-login" class="auth-panel">
+                <div id="auth-list" class="scroll-list"></div>
+                <button class="btn btn-outline" onclick="App.toggleReg()" data-bind="auth.join">Join the
+                    Evolution</button>
+            </div>
+
+            <div id="auth-reg" class="auth-panel hidden">
+                <input type="text" id="reg-name" class="in-lg" placeholder="Name">
+                <input type="email" id="reg-email" class="in-lg" placeholder="Email">
+                <button class="btn btn-primary glow" onclick="App.register()" data-bind="auth.start">Start
+                    Journey</button>
+                <button class="btn btn-text" onclick="App.toggleReg()" data-bind="auth.rec">Have an account?</button>
             </div>
         </div>
-    </header>
+    </section>
 
-    <!-- Main App -->
-    <main class="main-app">
-        <div class="container">
-            <!-- Welcome Screen -->
-            <section class="welcome-screen" id="welcomeScreen">
-                <div class="welcome-content">
-                    <div class="welcome-icon">
-                        <svg viewBox="0 0 100 100" class="animated-logo">
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="url(#gradient-big)" stroke-width="6"
-                                stroke-dasharray="85 15" class="rotating-circle" />
-                            <path d="M35 50 L40 35 L45 58 L50 40 L55 50 L60 45" fill="none" stroke="url(#gradient-big)"
-                                stroke-width="5" />
-                            <defs>
-                                <linearGradient id="gradient-big" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#0ea5e9" />
-                                    <stop offset="100%" style="stop-color:#06b6d4" />
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                    </div>
-                    <h1 class="welcome-title">
-                        <span data-i18n="welcome.title">Tu evolución,</span>
-                        <span class="gradient-text" data-i18n="welcome.titleHighlight">día a día</span>
-                    </h1>
-                    <p class="welcome-subtitle" data-i18n="welcome.subtitle">Rutinas personalizadas que se adaptan a tu
-                        ritmo de vida real</p>
-
-                    <div class="welcome-form">
-                        <div class="input-group">
-                            <label for="userName" data-i18n="welcome.nameLabel">¿Cómo te llamás?</label>
-                            <input type="text" id="userName" data-i18n-placeholder="welcome.namePlaceholder"
-                                placeholder="Tu nombre" class="input-field" autocomplete="given-name">
-                        </div>
-
-                        <div class="input-group">
-                            <label data-i18n="welcome.environmentLabel">¿Dónde vas a entrenar?</label>
-                            <div class="option-selector">
-                                <button class="option-btn" data-option="environment" data-value="gym">
-                                    <span class="option-icon">🏋️</span>
-                                    <span data-i18n="welcome.gym">Gimnasio</span>
-                                </button>
-                                <button class="option-btn" data-option="environment" data-value="home">
-                                    <span class="option-icon">🏠</span>
-                                    <span data-i18n="welcome.home">Casa</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="input-group">
-                            <label data-i18n="welcome.levelLabel">¿Cuál es tu nivel?</label>
-                            <div class="option-selector">
-                                <button class="option-btn" data-option="level" data-value="beginner">
-                                    <span class="option-icon">🌱</span>
-                                    <span data-i18n="welcome.beginner">Principiante</span>
-                                </button>
-                                <button class="option-btn" data-option="level" data-value="intermediate">
-                                    <span class="option-icon">💪</span>
-                                    <span data-i18n="welcome.intermediate">Intermedio</span>
-                                </button>
-                                <button class="option-btn" data-option="level" data-value="advanced">
-                                    <span class="option-icon">🔥</span>
-                                    <span data-i18n="welcome.advanced">Avanzado</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="input-group">
-                            <label data-i18n="welcome.goalLabel">¿Cuál es tu objetivo?</label>
-                            <div class="option-selector">
-                                <button class="option-btn" data-option="goal" data-value="strength">
-                                    <span class="option-icon">💎</span>
-                                    <span data-i18n="welcome.strength">Fuerza</span>
-                                </button>
-                                <button class="option-btn" data-option="goal" data-value="hypertrophy">
-                                    <span class="option-icon">💪</span>
-                                    <span data-i18n="welcome.hypertrophy">Hipertrofia</span>
-                                </button>
-                                <button class="option-btn" data-option="goal" data-value="endurance">
-                                    <span class="option-icon">⚡</span>
-                                    <span data-i18n="welcome.endurance">Resistencia</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <button class="btn-primary" id="startBtn">
-                            <span data-i18n="welcome.startButton">Empezar mi evolución</span>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <line x1="5" y1="12" x2="19" y2="12" />
-                                <polyline points="12 5 19 12 12 19" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div class="trust-signal">
-                        <div class="trust-item">
-                            <span class="trust-number">95%</span>
-                            <span class="trust-label" data-i18n="welcome.trust1">Tasa de cumplimiento</span>
-                        </div>
-                        <div class="trust-item">
-                            <span class="trust-number">2min</span>
-                            <span class="trust-label" data-i18n="welcome.trust2">Setup inicial</span>
-                        </div>
-                        <div class="trust-item">
-                            <span class="trust-number">100%</span>
-                            <span class="trust-label" data-i18n="welcome.trust3">Gratis</span>
-                        </div>
-                    </div>
+    <!-- VIEW: HUB -->
+    <section id="v-hub" class="view">
+        <nav class="navbar">
+            <div class="nav-usr">
+                <div>
+                    <h3 id="user-name">User</h3>
+                    <small data-bind="hub.hi">Welcome back,</small>
                 </div>
-            </section>
-
-            <!-- Main Dashboard -->
-            <section class="dashboard" id="dashboard" style="display: none;">
-                <!-- Tab Navigation -->
-                <nav class="tabs">
-                    <button class="tab active" data-tab="today">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                            <line x1="16" y1="2" x2="16" y2="6" />
-                            <line x1="8" y1="2" x2="8" y2="6" />
-                            <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
-                        <span data-i18n="tabs.today">Hoy</span>
-                    </button>
-                    <button class="tab" data-tab="routines">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                        </svg>
-                        <span data-i18n="tabs.routines">Rutinas</span>
-                    </button>
-                    <button class="tab" data-tab="progress">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <line x1="18" y1="20" x2="18" y2="10" />
-                            <line x1="12" y1="20" x2="12" y2="4" />
-                            <line x1="6" y1="20" x2="6" y2="14" />
-                        </svg>
-                        <span data-i18n="tabs.progress">Progreso</span>
-                    </button>
-                </nav>
-
-                <!-- Tab Content -->
-                <div class="tab-content">
-                    <!-- Today View -->
-                    <div class="tab-pane active" id="todayPane">
-                        <div class="pane-header">
-                            <div class="pane-title">
-                                <h2 data-i18n="today.title">Tu rutina de hoy</h2>
-                                <p class="date-display" id="dateDisplay"></p>
-                            </div>
-                            <div class="daily-score" id="dailyScore">
-                                <div class="score-circle">
-                                    <svg viewBox="0 0 100 100">
-                                        <circle cx="50" cy="50" r="45" fill="none" stroke="var(--bg-tertiary)"
-                                            stroke-width="8" />
-                                        <circle cx="50" cy="50" r="45" fill="none" stroke="url(#gradient-score)"
-                                            stroke-width="8" stroke-dasharray="282.7" stroke-dashoffset="282.7"
-                                            class="score-progress" id="scoreCircle" />
-                                        <defs>
-                                            <linearGradient id="gradient-score" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" style="stop-color:#0ea5e9" />
-                                                <stop offset="100%" style="stop-color:#06b6d4" />
-                                            </linearGradient>
-                                        </defs>
-                                    </svg>
-                                    <div class="score-value" id="scoreValue">0%</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="tasks-container" id="tasksToday"></div>
-
-                        <button class="btn-secondary" id="addTaskBtn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19" />
-                                <line x1="5" y1="12" x2="19" y2="12" />
-                            </svg>
-                            <span data-i18n="today.addTask">Nueva tarea</span>
-                        </button>
-
-                        <div class="suggestions-container" id="suggestions"></div>
-                    </div>
-
-                    <!-- Routines View -->
-                    <div class="tab-pane" id="routinesPane">
-                        <div class="pane-header">
-                            <h2 data-i18n="routines.title">Mis Rutinas</h2>
-                            <button class="btn-primary btn-sm" id="createRoutineBtn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <line x1="12" y1="5" x2="12" y2="19" />
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                </svg>
-                                <span data-i18n="routines.create">Crear rutina</span>
-                            </button>
-                        </div>
-
-                        <div class="routines-grid" id="routinesGrid"></div>
-                    </div>
-
-                    <!-- Progress View -->
-                    <div class="tab-pane" id="progressPane">
-                        <div class="pane-header">
-                            <h2 data-i18n="progress.title">Tu Progreso</h2>
-                            <select class="period-selector" id="periodSelector">
-                                <option value="7" data-i18n="progress.week">Última semana</option>
-                                <option value="30" data-i18n="progress.month">Último mes</option>
-                                <option value="90" data-i18n="progress.quarter">Últimos 3 meses</option>
-                            </select>
-                        </div>
-
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-icon">🔥</div>
-                                <div class="stat-content">
-                                    <span class="stat-value" id="streakValue">0</span>
-                                    <span class="stat-label" data-i18n="progress.streak">Días consecutivos</span>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-icon">✅</div>
-                                <div class="stat-content">
-                                    <span class="stat-value" id="completedValue">0</span>
-                                    <span class="stat-label" data-i18n="progress.completed">Tareas completadas</span>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-icon">⏱️</div>
-                                <div class="stat-content">
-                                    <span class="stat-value" id="timeValue">0h</span>
-                                    <span class="stat-label" data-i18n="progress.time">Tiempo invertido</span>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-icon">📈</div>
-                                <div class="stat-content">
-                                    <span class="stat-value" id="improvementValue">+0%</span>
-                                    <span class="stat-label" data-i18n="progress.improvement">Mejora promedio</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="chart-container">
-                            <h3 data-i18n="progress.activity">Actividad semanal</h3>
-                            <div class="activity-chart" id="activityChart"></div>
-                        </div>
-
-                        <div class="insights-container">
-                            <h3 data-i18n="progress.insights">Insights adaptativos</h3>
-                            <div class="insights-list" id="insightsList"></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </main>
-
-    <!-- Settings Modal -->
-    <div class="modal" id="settingsModal">
-        <div class="modal-content modal-large">
-            <div class="modal-header">
-                <h3 data-i18n="settings.title">Ajustes</h3>
-                <button class="btn-icon" id="closeSettingsModal">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                </button>
             </div>
-            <div class="modal-body">
-                <div class="settings-section" id="settingsLanguage">
-                    <h4 data-i18n="settings.language">Idioma</h4>
-                    <select id="languageSelector" class="input-field">
-                        <option value="es">Español</option>
+            <button class="icon-btn" onclick="App.loadSettings()" title="Settings">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1v6m0 6v6M1 12h6m6 0h6"></path>
+                    <path d="m4.93 4.93 4.24 4.24m5.66 5.66 4.24 4.24M4.93 19.07l4.24-4.24m5.66-5.66 4.24-4.24"></path>
+                </svg>
+            </button>
+        </nav>
+
+        <div class="content">
+            <div class="stats-row" style="margin-top:20px;">
+                <div class="stat-card">
+                    <h2 id="sess-count">0</h2>
+                    <span data-bind="hub.sess">Sessions</span>
+                </div>
+                <div class="stat-card">
+                    <h2 id="goal-label">Hyp</h2>
+                    <span data-bind="lbl.goal">Goal</span>
+                </div>
+            </div>
+
+            <div class="card settings-card" style="text-align:center; padding:30px;">
+                <h3 data-bind="app.tagline" style="margin-bottom:10px;">Evolve Locally.</h3>
+                <p id="goal-desc" style="color:var(--text-muted); font-size:0.9rem;">Description</p>
+            </div>
+        </div>
+
+        <div class="fab-container">
+            <button class="btn btn-primary btn-lg glow" onclick="App.generate()" data-bind="hub.gen">Generate
+                Workout</button>
+        </div>
+    </section>
+
+    <!-- VIEW: SETTINGS -->
+    <section id="v-settings" class="view">
+        <nav class="navbar">
+            <button class="icon-btn" onclick="App.loadHub()">←</button>
+            <h3 data-bind="sett.title">Settings</h3>
+            <div style="width:24px"></div>
+        </nav>
+        <div class="content">
+            <div class="card">
+                <div class="form-row">
+                    <label data-bind="sett.lang">Language</label>
+                    <select id="sel-lang" class="sel-clean" onchange="App.updateSettings()">
                         <option value="en">English</option>
+                        <option value="es">Español</option>
                     </select>
                 </div>
-
-                <div class="settings-section" id="settingsTheme">
-                    <h4 data-i18n="settings.theme">Tema</h4>
-                    <div class="theme-selector">
-                        <button class="theme-btn active" data-theme="dark">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                            </svg>
-                            <span data-i18n="settings.themeDark">Oscuro</span>
-                        </button>
-                        <button class="theme-btn" data-theme="light">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <circle cx="12" cy="12" r="5" />
-                                <line x1="12" y1="1" x2="12" y2="3" />
-                                <line x1="12" y1="21" x2="12" y2="23" />
-                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                                <line x1="1" y1="12" x2="3" y2="12" />
-                                <line x1="21" y1="12" x2="23" y2="12" />
-                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                            </svg>
-                            <span data-i18n="settings.themeLight">Claro</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="settings-section" id="settingsProfile">
-                    <h4 data-i18n="settings.profile">Perfil</h4>
-                    <div class="input-group">
-                        <label for="settingsName" data-i18n="settings.name">Nombre</label>
-                        <input type="text" id="settingsName" class="input-field">
-                    </div>
-                    <div class="input-group">
-                        <label for="settingsEnvironment" data-i18n="settings.environment">Entorno de
-                            entrenamiento</label>
-                        <select id="settingsEnvironment" class="input-field">
-                            <option value="gym" data-i18n="welcome.gym">Gimnasio</option>
-                            <option value="home" data-i18n="welcome.home">Casa</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="settingsLevel" data-i18n="settings.level">Nivel</label>
-                        <select id="settingsLevel" class="input-field">
-                            <option value="beginner" data-i18n="welcome.beginner">Principiante</option>
-                            <option value="intermediate" data-i18n="welcome.intermediate">Intermedio</option>
-                            <option value="advanced" data-i18n="welcome.advanced">Avanzado</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="settingsGoal" data-i18n="settings.goal">Objetivo</label>
-                        <select id="settingsGoal" class="input-field">
-                            <option value="strength" data-i18n="welcome.strength">Fuerza</option>
-                            <option value="hypertrophy" data-i18n="welcome.hypertrophy">Hipertrofia</option>
-                            <option value="endurance" data-i18n="welcome.endurance">Resistencia</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="settings-section" id="settingsPreferences">
-                    <h4 data-i18n="settings.preferences">Preferencias</h4>
-                    <div class="input-group">
-                        <label for="restTime" data-i18n="settings.restTime">Tiempo de descanso predeterminado
-                            (seg)</label>
-                        <input type="number" id="restTime" class="input-field" min="30" max="300" step="15" value="60">
-                    </div>
-                </div>
-
-                <div class="settings-section" id="settingsData">
-                    <h4 data-i18n="settings.data">Datos</h4>
-                    <button class="btn-secondary btn-full" id="exportDataBtn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        <span data-i18n="settings.export">Exportar datos</span>
-                    </button>
-                </div>
-
-                <div class="settings-section danger-zone" id="settingsDanger">
-                    <h4 data-i18n="settings.deleteAccount">Eliminar cuenta</h4>
-                    <p class="text-muted" data-i18n="settings.deleteConfirm">¿Estás seguro de que querés eliminar tu
-                        cuenta? Esta acción no se puede deshacer.</p>
-                    <button class="btn-danger btn-full" id="deleteAccountBtn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
-                        <span data-i18n="settings.deleteAccount">Eliminar cuenta</span>
-                    </button>
+                <div class="divider"></div>
+                <div class="form-row">
+                    <label data-bind="sett.theme">Theme</label>
+                    <select id="sel-theme" class="sel-clean" onchange="App.updateSettings()">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                    </select>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" id="cancelSettingsBtn" data-i18n="settings.cancel">Cancelar</button>
-                <button class="btn-primary" id="saveSettingsBtn" data-i18n="settings.save">Guardar cambios</button>
+
+            <div class="card">
+                <div class="form-row">
+                    <label data-bind="lbl.goal">Goal</label>
+                    <select id="sel-goal" class="sel-clean" onchange="App.updateSettings()">
+                        <option value="hypertrophy" data-bind="goal.hyp">Hypertrophy</option>
+                        <option value="strength" data-bind="goal.str">Strength</option>
+                        <option value="endurance" data-bind="goal.end">Endurance</option>
+                    </select>
+                </div>
+                <div class="divider"></div>
+                <div class="form-row">
+                    <label data-bind="lbl.lvl">Level</label>
+                    <select id="sel-lvl" class="sel-clean" onchange="App.updateSettings()">
+                        <option value="beginner" data-bind="lvl.beg">Beginner</option>
+                        <option value="intermediate" data-bind="lvl.int">Intermediate</option>
+                        <option value="advanced" data-bind="lvl.adv">Advanced</option>
+                    </select>
+                </div>
             </div>
+
+            <h4 class="settings-section-title" data-bind="sett.privacy" style="margin-top: 32px;">Privacy &amp; Data
+            </h4>
+            <div class="card">
+                <button class="settings-btn" onclick="App.exportData()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path>
+                    </svg>
+                    <span data-bind="sett.export">Export My Data</span>
+                </button>
+                <div class="divider"></div>
+                <button class="settings-btn" onclick="App.clearCache()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                        </path>
+                    </svg>
+                    <span data-bind="sett.clear">Clear Cache</span>
+                </button>
+            </div>
+
+            <h4 class="settings-section-title" data-bind="sett.support" style="margin-top: 32px;">Support</h4>
+            <div class="card">
+                <button class="settings-btn" onclick="Tutorial.reset(); Tutorial.show();">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"></path>
+                    </svg>
+                    <span data-bind="sett.tutorial">Replay Tutorial</span>
+                </button>
+                <div class="divider"></div>
+                <button class="settings-btn" onclick="window.open('https://github.com/emitab/evoroutine', '_blank')">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4M12 8h.01"></path>
+                    </svg>
+                    <span data-bind="sett.about">About / Help</span>
+                </button>
+            </div>
+
+            <div class="card" style="margin-top: 16px; text-align: center; padding: 20px;">
+                <small style="opacity: 0.6;">EvoRoutine v4.0.0-RC1</small><br>
+                <small style="opacity: 0.5; font-size: 0.75rem;">Production Ready</small>
+            </div>
+
+            <button class="btn btn-outline" onclick="App.logout()" style="margin-top: 24px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path>
+                </svg>
+                <span data-bind="sett.logout">Logout</span>
+            </button>
+
+            <button class="btn btn-destructive" onclick="App.deleteAccount()" style="margin-top: 12px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path
+                        d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6">
+                    </path>
+                </svg>
+                <span data-bind="sett.delete">Delete Account</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- VIEW: PLAN -->
+    <section id="v-plan" class="view">
+        <nav class="navbar">
+            <button class="icon-btn" onclick="App.loadHub()">←</button>
+            <h3 data-bind="prev.title">Workout Plan</h3>
+            <div style="width:24px"></div>
+        </nav>
+        <div id="plan-list" class="content list-container"></div>
+        <div class="fab-container">
+            <button class="btn btn-primary btn-lg" onclick="App.startSess()" data-bind="auth.start">Start
+                Journey</button>
+        </div>
+    </section>
+
+    <!-- VIEW: SESSION -->
+    <section id="v-sess" class="view">
+        <div class="progress-line">
+            <div id="sess-bar"></div>
+        </div>
+
+        <div class="sess-header">
+            <h1 id="ex-name">Exercise</h1>
+            <span id="set-badge" class="badge">Set 1/3</span>
+        </div>
+
+        <div class="center-content">
+            <div class="input-matrix">
+                <div class="in-group">
+                    <input type="number" id="inp-1" class="in-giant" inputmode="decimal">
+                    <label id="lbl-1">KG</label>
+                </div>
+                <div class="in-group">
+                    <input type="number" id="inp-2" class="in-giant" inputmode="decimal">
+                    <label id="lbl-2">REPS</label>
+                </div>
+            </div>
+
+            <div class="rpe-zone">
+                <p data-bind="rpe.title">How did that feel?</p>
+                <div class="rpe-grid">
+                    <button class="rpe-btn" data-v="1" data-bind="rpe.1">Too Easy</button>
+                    <button class="rpe-btn" data-v="2" data-bind="rpe.2">Good</button>
+                    <button class="rpe-btn" data-v="3" data-bind="rpe.3">Hard</button>
+                    <button class="rpe-btn" data-v="4" data-bind="rpe.4">Failure</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="fab-container two-btn">
+            <button class="btn btn-sec" onclick="App.activeWorkout[App.sess.idx].sets++; App.renderSet()">+ Set</button>
+            <button class="btn btn-primary" onclick="App.finishSet()">NEXT</button>
+        </div>
+    </section>
+
+    <!-- VIEW: REST -->
+    <section id="v-rest" class="view">
+        <div class="center-content">
+            <div class="timer-ring">
+                <span id="timer-disp">01:30</span>
+            </div>
+            <p style="opacity:0.6; margin-top:16px;">RECOVER</p>
+        </div>
+        <div class="fab-container">
+            <button class="btn btn-primary" onclick="App.skipRest()">READY</button>
+        </div>
+    </section>
+
+    <!-- TUTORIAL OVERLAY -->
+    <div id="tutorial-overlay" class="tutorial-overlay">
+        <div class="tutorial-modal">
+            <button class="tutorial-close" onclick="Tutorial.skip()" title="Skip Tutorial">✕</button>
+            <div id="tutorial-content"></div>
         </div>
     </div>
 
-    <!-- Task Modal -->
-    <div class="modal" id="taskModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="taskModalTitle" data-i18n="taskModal.create">Nueva Tarea</h3>
-                <button class="btn-icon" id="closeTaskModal">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group">
-                    <label for="taskName" data-i18n="taskModal.name">Nombre del ejercicio</label>
-                    <input type="text" id="taskName" class="input-field"
-                        data-i18n-placeholder="taskModal.namePlaceholder" placeholder="Ej: Sentadillas">
-                </div>
-
-                <div class="input-row">
-                    <div class="input-group">
-                        <label for="taskSets" data-i18n="taskModal.sets">Series</label>
-                        <input type="number" id="taskSets" class="input-field" placeholder="3" min="1">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="taskReps" data-i18n="taskModal.reps">Repeticiones</label>
-                        <input type="number" id="taskReps" class="input-field" placeholder="10" min="1">
-                    </div>
-                </div>
-
-                <div class="input-row">
-                    <div class="input-group">
-                        <label for="taskWeight" data-i18n="taskModal.weight">Peso (kg)</label>
-                        <input type="number" id="taskWeight" class="input-field" placeholder="0" min="0" step="0.5">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="taskRest" data-i18n="taskModal.rest">Descanso (seg)</label>
-                        <input type="number" id="taskRest" class="input-field" placeholder="60" min="15" step="15">
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label for="taskNotes" data-i18n="taskModal.notes">Notas</label>
-                    <textarea id="taskNotes" class="input-field" rows="3"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" id="cancelTaskBtn" data-i18n="modal.cancel">Cancelar</button>
-                <button class="btn-primary" id="saveTaskBtn" data-i18n="modal.save">Guardar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Routine Modal -->
-    <div class="modal" id="routineModal">
-        <div class="modal-content modal-large">
-            <div class="modal-header">
-                <h3 data-i18n="routineModal.create">Nueva Rutina</h3>
-                <button class="btn-icon" id="closeRoutineModal">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group">
-                    <label for="routineName" data-i18n="routineModal.name">Nombre de la rutina</label>
-                    <input type="text" id="routineName" class="input-field"
-                        data-i18n-placeholder="routineModal.namePlaceholder" placeholder="Ej: Rutina de piernas">
-                </div>
-
-                <div class="input-group">
-                    <label data-i18n="routineModal.days">Días de la semana</label>
-                    <div class="days-selector">
-                        <button class="day-btn" data-day="1" data-i18n="day.mon">L</button>
-                        <button class="day-btn" data-day="2" data-i18n="day.tue">M</button>
-                        <button class="day-btn" data-day="3" data-i18n="day.wed">X</button>
-                        <button class="day-btn" data-day="4" data-i18n="day.thu">J</button>
-                        <button class="day-btn" data-day="5" data-i18n="day.fri">V</button>
-                        <button class="day-btn" data-day="6" data-i18n="day.sat">S</button>
-                        <button class="day-btn" data-day="0" data-i18n="day.sun">D</button>
-                    </div>
-                </div>
-
-                <div class="routine-exercises-list" id="routineExercisesList"></div>
-
-                <button class="btn-secondary btn-full" id="addExerciseToRoutineBtn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    <span data-i18n="routineModal.addExercise">Agregar ejercicio</span>
-                </button>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" id="cancelRoutineBtn" data-i18n="modal.cancel">Cancelar</button>
-                <button class="btn-primary" id="saveRoutineBtn" data-i18n="modal.save">Guardar rutina</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Account Confirmation Modal -->
-    <div class="modal" id="deleteAccountModal" style="z-index: 1100;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 data-i18n="settings.deleteWarning" style="color: #ef4444;">¿Estás absolutamente seguro?</h3>
-                <button class="btn-icon" id="closeDeleteModal">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p data-i18n="settings.deleteConfirm" style="margin-bottom: var(--spacing-lg);">
-                    Esta acción eliminará permanentemente todos tus datos, rutinas y progreso. No se puede deshacer.
-                </p>
-                <div class="danger-zone" style="background: rgba(239, 68, 68, 0.1); border-color: #ef4444;">
-                    <button class="btn-danger btn-full" id="confirmDeleteAccountBtn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
-                        <span data-i18n="settings.deleteAccount">Eliminar cuenta permanentemente</span>
-                    </button>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" id="cancelDeleteBtn" data-i18n="modal.cancel">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="i18n.js"></script>
-    <script src="exercises.js"></script>
-    <script src="app.js"></script>
+    <script src="script.js"></script>
+    <script src="tutorial.js"></script>
 </body>
 
 </html>
