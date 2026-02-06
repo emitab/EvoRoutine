@@ -75,8 +75,9 @@ const I18n = {
             "login.disclaimer": "Local mode: your data is only saved on this device",
             "login.privacy": "By continuing, you accept our",
             "login.terms": "Terms",
-            "login.policy": "Privacy Policy",
-            "login.loading": "Signing in..."
+            "login.policy": "Policy",
+            "login.loading": "Signing in...",
+            "env.gym": "Gym Routine", "env.home": "Home Routine"
         },
         es: {
             "app.title": "EvoRoutine", "app.tagline": "Evoluciona Localmente.",
@@ -134,7 +135,8 @@ const I18n = {
             "login.privacy": "Al continuar, aceptas nuestros",
             "login.terms": "Términos",
             "login.policy": "Política de Privacidad",
-            "login.loading": "Iniciando sesión..."
+            "login.loading": "Iniciando sesión...",
+            "env.gym": "Gimnasio", "env.home": "Casa"
         }
     },
     t: (k) => I18n.data[I18n.lang][k] || k,
@@ -207,7 +209,10 @@ const CATALOG = {
     "plank": { muscle: "core", mode: "time", en: "Plank", es: "Plancha" },
     "crunch": { muscle: "core", mode: "body", en: "Crunches", es: "Abdominales" },
     "curl": { muscle: "pull", mode: "load", en: "Bicep Curl", es: "Curl Bíceps" },
-    "ext": { muscle: "push", mode: "load", en: "Tricep Ext", es: "Ext. Tríceps" }
+    "ext": { muscle: "push", mode: "load", en: "Tricep Ext", es: "Ext. Tríceps" },
+    "pushup": { muscle: "push", mode: "body", en: "Push Ups", es: "Flexiones" },
+    "squat_bw": { muscle: "legs", mode: "body", en: "Air Squat", es: "Sentadilla (Aire)" },
+    "lunge_bw": { muscle: "legs", mode: "body", en: "Lunges", es: "Estocadas" }
 };
 
 const Trainer = {
@@ -256,15 +261,31 @@ const Trainer = {
         return { ...targets, tip };
     },
 
-    generateRoutine: (user) => {
+    generateRoutine: (user, env = 'gym') => {
         const g = user.settings.goal;
         const schema = g === 'strength' ? ['legs', 'push', 'pull', 'legs', 'push'] :
             g === 'endurance' ? ['legs', 'push', 'pull', 'core', 'legs', 'core'] :
                 ['legs', 'push', 'pull', 'core']; // Hypertrophy
 
         return schema.map(m => {
-            const candidates = Object.keys(CATALOG).filter(k => CATALOG[k].muscle === m);
-            const pick = candidates[Math.floor(Math.random() * candidates.length)];
+            // Filter candidates based on Environment
+            const candidates = Object.keys(CATALOG).filter(k => {
+                const item = CATALOG[k];
+                if (item.muscle !== m) return false;
+
+                if (env === 'home') {
+                    // Home: Only body or time (no load/equipment usually)
+                    // If you have dumbbells at home this logic might be too strict, but for "Home" mode without config, Bodyweight is safest.
+                    return item.mode === 'body' || item.mode === 'time';
+                }
+                return true; // Gym: All allowed
+            });
+
+            // Fallback if no specific exercise found (e.g. strict Home filter) - pick any bodyweight from muscle or skip
+            const finalCandidates = candidates.length > 0 ? candidates :
+                Object.keys(CATALOG).filter(k => CATALOG[k].muscle === m); // Fallback to all if empty (rare)
+
+            const pick = finalCandidates[Math.floor(Math.random() * finalCandidates.length)];
             const data = CATALOG[pick];
             const smartParams = Trainer.getSmartTargets(user, pick, data.mode);
 
@@ -561,16 +582,27 @@ window.App = {
     },
 
     // TRAINER ACTIONS
-    generate: () => {
-        App.activeWorkout = Trainer.generateRoutine(App.user);
+    generate: (env = null) => {
+        // Read Env from Select if null (re-gen case) or default
+        const sel = document.getElementById('plan-env');
+        const currentEnv = env || (sel ? sel.value : 'gym');
+
+        App.activeWorkout = Trainer.generateRoutine(App.user, currentEnv);
         // Render List
         const list = document.getElementById('plan-list');
         list.innerHTML = '';
         App.activeWorkout.forEach((ex, i) => {
             const info = CATALOG[ex.id];
-            const name = info[I18n.lang];
-            let meta = ex.target.val1 + (info.mode === 'time' ? 's' : 'reps');
-            if (ex.target.val2 > 0) meta += ` @ ${ex.target.val2}kg`;
+            const name = info[I18n.lang] || info.en;
+            let meta = '';
+
+            if (info.mode === 'time') {
+                meta = `${ex.target.val1}s`;
+            } else if (info.mode === 'body') {
+                meta = `${ex.target.val1} reps`;
+            } else {
+                meta = `${ex.target.val1} x ${ex.target.val2}kg`;
+            }
 
             const li = document.createElement('div');
             li.className = 'plan-item animate-in';
@@ -586,6 +618,14 @@ window.App = {
             list.appendChild(li);
         });
         UI.goto('v-plan');
+
+        // Ensure select matches currentEnv
+        if (sel) sel.value = currentEnv;
+    },
+
+    regenerate: () => {
+        const sel = document.getElementById('plan-env');
+        if (sel) App.generate(sel.value);
     },
 
     startSess: () => {
