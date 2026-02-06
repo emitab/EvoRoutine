@@ -338,6 +338,8 @@ window.App = {
     user: null,
     activeWorkout: null,
     sess: { idx: 0, set: 1, timer: null },
+    activeActionIdx: -1,
+    selectorMode: 'add',
 
     init: async () => {
         // Hydrate
@@ -588,17 +590,26 @@ window.App = {
         const currentEnv = env || (sel ? sel.value : 'gym');
 
         App.activeWorkout = Trainer.generateRoutine(App.user, currentEnv);
-        // Render List
+        App.renderPlan();
+
+        // Ensure select matches currentEnv
+        if (sel) sel.value = currentEnv;
+    },
+
+    renderPlan: () => {
         const list = document.getElementById('plan-list');
         list.innerHTML = '';
         App.activeWorkout.forEach((ex, i) => {
             const info = CATALOG[ex.id];
-            const name = info[I18n.lang] || info.en;
-            let meta = '';
+            const name = info ? (info[I18n.lang] || info.en) : ex.id;
+            // Safe fallback for null info
 
-            if (info.mode === 'time') {
+            let meta = '';
+            const mode = info ? info.mode : 'load';
+
+            if (mode === 'time') {
                 meta = `${ex.target.val1}s`;
-            } else if (info.mode === 'body') {
+            } else if (mode === 'body') {
                 meta = `${ex.target.val1} reps`;
             } else {
                 meta = `${ex.target.val1} x ${ex.target.val2}kg`;
@@ -607,6 +618,8 @@ window.App = {
             const li = document.createElement('div');
             li.className = 'plan-item animate-in';
             li.style.animationDelay = (i * 0.05) + 's';
+            li.onclick = () => App.openActionSheet(i);
+
             li.innerHTML = `
                 <div class="pi-idx">${i + 1}</div>
                 <div class="pi-body">
@@ -618,9 +631,77 @@ window.App = {
             list.appendChild(li);
         });
         UI.goto('v-plan');
+    },
 
-        // Ensure select matches currentEnv
-        if (sel) sel.value = currentEnv;
+    openActionSheet: (idx) => {
+        App.activeActionIdx = idx;
+        document.getElementById('action-sheet').classList.add('active');
+        document.getElementById('action-sheet-overlay').classList.add('active');
+    },
+
+    closeActionSheet: () => {
+        document.getElementById('action-sheet').classList.remove('active');
+        document.getElementById('action-sheet-overlay').classList.remove('active');
+    },
+
+    openExSelector: (mode) => {
+        App.selectorMode = mode; // 'add' or 'replace'
+        if (mode === 'replace') App.closeActionSheet();
+
+        const list = document.getElementById('ex-select-list');
+        list.innerHTML = '';
+
+        Object.keys(CATALOG).forEach(k => {
+            const info = CATALOG[k];
+            const name = info[I18n.lang] || info.en;
+            const el = document.createElement('div');
+            el.className = 'ex-option';
+            el.onclick = () => App.selectExercise(k);
+            el.innerHTML = `<strong>${name}</strong><small>${info.muscle}</small>`;
+            list.appendChild(el);
+        });
+
+        document.getElementById('ex-selector-overlay').classList.add('active');
+    },
+
+    closeExSelector: () => {
+        document.getElementById('ex-selector-overlay').classList.remove('active');
+    },
+
+    selectExercise: (id) => {
+        const data = CATALOG[id];
+        const smartParams = Trainer.getStartParams(App.user.settings.goal, App.user.settings.level, data.mode);
+        // Try history
+        const histParams = Trainer.getSmartTargets(App.user, id, data.mode);
+
+        const newEx = {
+            id: id,
+            sets: smartParams.sets,
+            target: { val1: histParams.val1, val2: histParams.val2 },
+            tip: null
+        };
+
+        if (App.selectorMode === 'add') {
+            App.activeWorkout.push(newEx);
+            UI.toast('Exercise Added', 'success');
+        } else {
+            if (App.activeActionIdx > -1) {
+                App.activeWorkout[App.activeActionIdx] = newEx;
+                UI.toast('Exercise Updated', 'success');
+            }
+        }
+
+        App.renderPlan();
+        App.closeExSelector();
+    },
+
+    removeExercise: () => {
+        if (App.activeActionIdx > -1) {
+            App.activeWorkout.splice(App.activeActionIdx, 1);
+            App.renderPlan();
+            App.closeActionSheet();
+            UI.toast('Exercise Removed', 'info');
+        }
     },
 
     regenerate: () => {

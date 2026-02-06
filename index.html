@@ -215,6 +215,7 @@
             <div style="width:24px"></div>
         </nav>
         <div id="plan-list" class="content list-container"></div>
+        <button class="btn-square-add" onclick="App.openExSelector('add')">+</button>
         <div class="fab-container">
             <button class="btn btn-primary btn-lg" onclick="App.startSess()" data-bind="auth.start">Start
                 Journey</button>
@@ -280,6 +281,27 @@
             <button class="tutorial-close" onclick="Tutorial.skip()" title="Skip Tutorial">✕</button>
             <div id="tutorial-content"></div>
         </div>
+    </div>
+
+    <!-- EXERCISE SELECTOR -->
+    <div id="ex-selector-overlay" class="tutorial-overlay">
+        <div class="tutorial-modal"
+            style="max-height:80vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+            <div
+                style="padding:20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <h3 class="tutorial-title" id="ex-sel-title" style="margin:0; font-size:1.2rem;">Select Exercise</h3>
+                <button class="tutorial-close" style="position:static;" onclick="App.closeExSelector()">✕</button>
+            </div>
+            <div id="ex-select-list" style="overflow-y:auto; flex:1;"></div>
+        </div>
+    </div>
+
+    <!-- ACTION SHEET -->
+    <div id="action-sheet-overlay" class="sheet-overlay" onclick="App.closeActionSheet()"></div>
+    <div id="action-sheet" class="action-sheet">
+        <button class="btn btn-sec" onclick="App.openExSelector('replace')">Replace Exercise</button>
+        <button class="btn btn-destructive" onclick="App.removeExercise()">Remove Exercise</button>
+        <button class="btn btn-text" onclick="App.closeActionSheet()">Cancel</button>
     </div>
 
     <script src="script.js?v=4.0.1"></script>
