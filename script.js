@@ -210,21 +210,28 @@ const Store = {
 
 // --- 5. DOMAIN: EXERCISES & TRAINING ENGINE ---
 const CATALOG = {
-    "squat": { muscle: "legs", mode: "load", en: "Back Squat", es: "Sentadilla Trasera" },
-    "deadlift": { muscle: "pull", mode: "load", en: "Deadlift", es: "Peso Muerto" },
-    "bench": { muscle: "push", mode: "load", en: "Bench Press", es: "Press Banca" },
-    "ohp": { muscle: "push", mode: "load", en: "Overhead Press", es: "Press Militar" },
-    "row": { muscle: "pull", mode: "load", en: "Barbell Row", es: "Remo Barra" },
-    "lunge": { muscle: "legs", mode: "load", en: "Lunges", es: "Estocadas" },
-    "pullup": { muscle: "pull", mode: "body", en: "Pull Ups", es: "Dominadas" },
-    "dip": { muscle: "push", mode: "body", en: "Dips", es: "Fondos" },
-    "plank": { muscle: "core", mode: "time", en: "Plank", es: "Plancha" },
-    "crunch": { muscle: "core", mode: "body", en: "Crunches", es: "Abdominales" },
-    "curl": { muscle: "pull", mode: "load", en: "Bicep Curl", es: "Curl Bíceps" },
-    "ext": { muscle: "push", mode: "load", en: "Tricep Ext", es: "Ext. Tríceps" },
-    "pushup": { muscle: "push", mode: "body", en: "Push Ups", es: "Flexiones" },
-    "squat_bw": { muscle: "legs", mode: "body", en: "Air Squat", es: "Sentadilla (Peso Corporal)" },
-    "lunge_bw": { muscle: "legs", mode: "body", en: "Lunges", es: "Estocadas" }
+    // Tier 1: Basic / Low Neuro / Bodyweight Easy
+    "squat_bw": { muscle: "legs", mode: "body", tier: 1, en: "Air Squat", es: "Sentadilla (Peso Corporal)" },
+    "lunge_bw": { muscle: "legs", mode: "body", tier: 1, en: "Lunges (Bodyweight)", es: "Estocadas (Peso Corporal)" },
+    "pushup": { muscle: "push", mode: "body", tier: 1, en: "Push Ups", es: "Flexiones" },
+    "plank": { muscle: "core", mode: "time", tier: 1, en: "Plank", es: "Plancha" },
+    "crunch": { muscle: "core", mode: "body", tier: 1, en: "Crunches", es: "Abdominales" },
+
+    // Tier 2: Weighted Isolation / Moderate Compound / Skilled BW
+    "lunge": { muscle: "legs", mode: "load", tier: 2, en: "Weighted Lunges", es: "Estocadas con Carga" },
+    "row": { muscle: "pull", mode: "load", tier: 2, en: "Barbell Row", es: "Remo Barra" },
+    "pullup": { muscle: "pull", mode: "body", tier: 2, en: "Pull Ups", es: "Dominadas" },
+    "dip": { muscle: "push", mode: "body", tier: 2, en: "Dips", es: "Fondos" },
+    "curl": { muscle: "pull", mode: "load", tier: 2, en: "Bicep Curl", es: "Curl Bíceps" },
+    "ext": { muscle: "push", mode: "load", tier: 2, en: "Tricep Ext", es: "Ext. Tríceps" },
+    "weighted_crunch": { muscle: "core", mode: "load", tier: 2, en: "Cable Crunch", es: "Crunch en Polea" },
+
+    // Tier 3: High CNS / Heavy Compound
+    "squat": { muscle: "legs", mode: "load", tier: 3, en: "Back Squat", es: "Sentadilla Trasera" },
+    "deadlift": { muscle: "pull", mode: "load", tier: 3, en: "Deadlift", es: "Peso Muerto" },
+    "bench": { muscle: "push", mode: "load", tier: 3, en: "Bench Press", es: "Press Banca" },
+    "ohp": { muscle: "push", mode: "load", tier: 3, en: "Overhead Press", es: "Press Militar" },
+    "hanging_raise": { muscle: "core", mode: "body", tier: 3, en: "Hanging Leg Raise", es: "Elevación de Piernas" }
 };
 
 const Trainer = {
@@ -258,13 +265,14 @@ const Trainer = {
 
         if (mode === 'load' || mode === 'body') {
             if (rpe === '1') { // Too Easy -> Progressive Overload
-                targets.val2 += 2.5;
+                // For advanced users, micro-loading is key. Beginners can jump more.
+                const inc = user.settings.level === 'advanced' ? 1.25 : 2.5;
+                targets.val2 += inc;
                 tip = 'tip.inc';
             } else if (rpe === '4') { // Failed -> Deload
                 targets.val2 = Math.max(targets.val2 - 5, 0);
                 tip = 'tip.dec';
             }
-            // 2 & 3 maintain or micro-load if desired. For now, maintain.
         } else {
             // Time logic
             if (rpe === '1') targets.val1 += 5;
@@ -275,27 +283,62 @@ const Trainer = {
 
     generateRoutine: (user, env = 'gym') => {
         const g = user.settings.goal;
-        const schema = g === 'strength' ? ['legs', 'push', 'pull', 'legs', 'push'] :
-            g === 'endurance' ? ['legs', 'push', 'pull', 'core', 'legs', 'core'] :
-                ['legs', 'push', 'pull', 'core']; // Hypertrophy
+        const lvl = user.settings.level;
+
+        let schema;
+        if (g === 'strength') {
+            // Strength focus: Heavy compounds first
+            schema = ['legs', 'push', 'pull', 'legs', 'push'];
+        } else if (g === 'endurance') {
+            schema = ['legs', 'push', 'pull', 'core', 'legs', 'core'];
+        } else {
+            // Hypertrophy
+            schema = ['legs', 'push', 'pull', 'core'];
+        }
+
+        // Advanced logic: Add volume/complexity if advanced
+        if (lvl === 'advanced' && g === 'hypertrophy') {
+            // Add an extra compound or isolation
+            schema.push('push');
+        }
 
         return schema.map(m => {
-            // Filter candidates based on Environment
+            // Filter candidates based on Environment AND Level (Tier system)
             const candidates = Object.keys(CATALOG).filter(k => {
                 const item = CATALOG[k];
                 if (item.muscle !== m) return false;
 
+                // Environment Check
                 if (env === 'home') {
-                    // Home: Only body or time (no load/equipment usually)
-                    // If you have dumbbells at home this logic might be too strict, but for "Home" mode without config, Bodyweight is safest.
-                    return item.mode === 'body' || item.mode === 'time';
+                    // Home: Allow body, time, OR load if it's not a heavy barbell move (assuming dumbbells might exist, strictly home usually implies limited gear)
+                    // For logic safety, let's keep restricted home mode unless user overrides.
+                    // But Advanced Home users might have gear. For now, strict 'body'/'time' for home to be safe, 
+                    // OR allow Tier 1/2 load items (dumbbells). 
+                    // Let's stick to strict mode filter for HOME to avoid "Barbell Squat" at home.
+                    const portable = item.mode === 'body' || item.mode === 'time' || ['curl', 'lunge', 'row', 'ohp'].includes(k);
+                    if (!portable) return false;
                 }
-                return true; // Gym: All allowed
+
+                // LEVEL / TIER FILTER (The Core Improvement)
+                // Beginner: Tier 1 & 2 (No Tier 3 heavy compounds usually, or very guided) -> Let's say Tier 1 & 2 only.
+                // Intermediate: Tier 1, 2, 3.
+                // Advanced: Tier 2 & 3 ONLY. No Tier 1 basics.
+
+                if (lvl === 'beginner' && item.tier > 2) return false;
+                if (lvl === 'advanced' && item.tier < 2) return false;
+
+                return true;
             });
 
-            // Fallback if no specific exercise found (e.g. strict Home filter) - pick any bodyweight from muscle or skip
-            const finalCandidates = candidates.length > 0 ? candidates :
-                Object.keys(CATALOG).filter(k => CATALOG[k].muscle === m); // Fallback to all if empty (rare)
+            // Fallback: If strict filtering leaves no candidates (e.g. Advanced Core at Home?), 
+            // relax filter to muscle match only, prioritizing highest tier avail.
+            let finalCandidates = candidates;
+            if (candidates.length === 0) {
+                finalCandidates = Object.keys(CATALOG).filter(k => CATALOG[k].muscle === m)
+                    .sort((a, b) => CATALOG[b].tier - CATALOG[a].tier); // Prefer harder ones
+                // Take top 2
+                finalCandidates = finalCandidates.slice(0, 2);
+            }
 
             const pick = finalCandidates[Math.floor(Math.random() * finalCandidates.length)];
             const data = CATALOG[pick];
