@@ -23,6 +23,7 @@ const I18n = {
         en: {
             "app.title": "EvoRoutine", "app.tagline": "Evolve Locally.",
             "auth.join": "Join the Evolution", "auth.name": "Your Name", "auth.email": "Your Email", "auth.start": "Start Journey", "auth.rec": "Have an account?", "auth.login": "Login",
+            "auth.credit": "App made with ♥️ by emitab",
             "hub.hi": "Welcome back,", "hub.streak": "Streak", "hub.sess": "Sessions", "hub.gen": "Generate Workout", "hub.history": "Recent Activity",
             "sess.set": "Set", "sess.finish": "Finish Workout", "sess.copy": "Workout Copied!",
             "rpe.title": "How did that feel?", "rpe.1": "Too Easy", "rpe.2": "Good", "rpe.3": "Hard", "rpe.4": "Failure",
@@ -86,6 +87,7 @@ const I18n = {
         es: {
             "app.title": "EvoRoutine", "app.tagline": "Evoluciona Localmente.",
             "auth.join": "Únete a la Evolución", "auth.name": "Tu Nombre", "auth.email": "Tu Correo", "auth.start": "Comenzar", "auth.rec": "¿Ya tienes cuenta?", "auth.login": "Entrar",
+            "auth.credit": "Aplicación hecha con ♥️ por emitab",
             "hub.hi": "Hola,", "hub.streak": "Racha", "hub.sess": "Sesiones", "hub.gen": "Generar Rutina", "hub.history": "Actividad Reciente",
             "sess.set": "Serie", "sess.finish": "Terminar Rutina", "sess.copy": "¡Rutina copiada!",
             "rpe.title": "¿Qué tal se sintió?", "rpe.1": "Muy Fácil", "rpe.2": "Bien", "rpe.3": "Duro", "rpe.4": "Fallo",
