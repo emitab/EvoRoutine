@@ -307,24 +307,26 @@
     <!-- CUSTOM EXERCISE MODAL -->
     <div id="custom-ex-overlay" class="tutorial-overlay">
         <div class="tutorial-modal">
-            <h3 class="tutorial-title">New Exercise</h3>
-            <p class="tutorial-desc" style="margin-bottom:16px;">Create your own exercise.</p>
+            <h3 class="tutorial-title" data-bind="cust.title">New Exercise</h3>
+            <p class="tutorial-desc" style="margin-bottom:16px;" data-bind="cust.desc">Create your own exercise.</p>
 
-            <input type="text" id="cust-ex-name" class="in-lg" placeholder="Name (e.g. Box Jumps)">
+            <input type="text" id="cust-ex-name" class="in-lg" data-i18n-ph="cust.name"
+                placeholder="Name (e.g. Box Jumps)">
 
             <div style="margin-bottom:20px;">
-                <label style="display:block; margin-bottom:8px; color:var(--text-muted); font-size:0.9rem;">Tracking
-                    Type</label>
+                <label style="display:block; margin-bottom:8px; color:var(--text-muted); font-size:0.9rem;"
+                    data-bind="cust.type">Tracking Type</label>
                 <select id="cust-ex-type" class="in-lg" style="margin-bottom:0;">
-                    <option value="load">Weights & Reps</option>
-                    <option value="body">Reps Only (Bodyweight)</option>
-                    <option value="time">Time / Duration</option>
+                    <option value="load" data-bind="cust.t.load">Weights & Reps</option>
+                    <option value="body" data-bind="cust.t.body">Reps Only (Bodyweight)</option>
+                    <option value="time" data-bind="cust.t.time">Time / Duration</option>
                 </select>
             </div>
 
             <div class="two-btn">
-                <button class="btn btn-sec" onclick="App.closeCustomCreator()">Cancel</button>
-                <button class="btn btn-primary" onclick="App.saveCustomExercise()">Create</button>
+                <button class="btn btn-sec" onclick="App.closeCustomCreator()" data-bind="cust.cancel">Cancel</button>
+                <button class="btn btn-primary" onclick="App.saveCustomExercise()"
+                    data-bind="cust.create">Create</button>
             </div>
         </div>
     </div>

@@ -77,7 +77,11 @@ const I18n = {
             "login.terms": "Terms",
             "login.policy": "Policy",
             "login.loading": "Signing in...",
-            "env.gym": "Gym Routine", "env.home": "Home Routine"
+            "env.gym": "Gym Routine", "env.home": "Home Routine",
+            "cust.title": "New Exercise", "cust.desc": "Create your own exercise.",
+            "cust.name": "Name (e.g. Box Jumps)", "cust.type": "Tracking Type",
+            "cust.t.load": "Weights & Reps", "cust.t.body": "Reps Only (Bodyweight)", "cust.t.time": "Time / Duration",
+            "cust.create": "Create", "cust.cancel": "Cancel", "cust.btn": "+ Create Custom Exercise", "cust.sub": "Custom"
         },
         es: {
             "app.title": "EvoRoutine", "app.tagline": "Evoluciona Localmente.",
@@ -136,7 +140,11 @@ const I18n = {
             "login.terms": "Términos",
             "login.policy": "Política de Privacidad",
             "login.loading": "Iniciando sesión...",
-            "env.gym": "Gimnasio", "env.home": "Casa"
+            "env.gym": "Gimnasio", "env.home": "Casa",
+            "cust.title": "Nuevo Ejercicio", "cust.desc": "Crea tu propio ejercicio.",
+            "cust.name": "Nombre (ej. Saltos al Cajón)", "cust.type": "Tipo de Registro",
+            "cust.t.load": "Peso y Reps", "cust.t.body": "Solo Reps (Corporal)", "cust.t.time": "Tiempo / Duración",
+            "cust.create": "Crear", "cust.cancel": "Cancelar", "cust.btn": "+ Crear Personalizado", "cust.sub": "Personalizado"
         }
     },
     t: (k) => I18n.data[I18n.lang][k] || k,
@@ -315,6 +323,11 @@ const UI = {
         // Update static text
         document.querySelectorAll('[data-bind]').forEach(el => {
             el.textContent = I18n.t(el.dataset.bind);
+        });
+
+        // Update Placeholders
+        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+            el.placeholder = I18n.t(el.dataset.i18nPh);
         });
 
         // Update HTML Lang attribute
@@ -658,7 +671,7 @@ window.App = {
         createBtn.className = 'ex-option';
         createBtn.style.background = 'rgba(207, 245, 104, 0.1)';
         createBtn.style.borderLeft = '4px solid var(--primary)';
-        createBtn.innerHTML = `<strong>+ ${I18n.lang === 'es' ? 'Crear Nuevo Ejercicio' : 'Create New Exercise'}</strong><small>${I18n.lang === 'es' ? 'Personalizado' : 'Custom'}</small>`;
+        createBtn.innerHTML = `<strong>${I18n.t('cust.btn')}</strong><small>${I18n.t('cust.sub')}</small>`;
         createBtn.onclick = () => App.openCustomCreator();
         list.appendChild(createBtn);
 
