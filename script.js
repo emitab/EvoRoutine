@@ -749,11 +749,15 @@ window.App = {
         const sel = document.getElementById('plan-env');
         const currentEnv = env || (sel ? sel.value : 'gym');
 
+        // Show/Hide Equip Button based on Env immediately
+        const eqBtn = document.getElementById('btn-equip-edit');
+        if (eqBtn) eqBtn.style.display = (currentEnv === 'home') ? 'inline-block' : 'none';
+
         // Check Logic for Home
         if (currentEnv === 'home') {
-            if (!App.user.settings.equip) {
-                // First time asking? Or assume none?
-                // If undefined, open selector
+            // Explicit check for undefined to allow empty array (nothing selected) logic
+            if (typeof App.user.settings.equip === 'undefined') {
+                console.log('Opening Selector due to undefined equip');
                 App.openEquipSelector();
                 return;
             }
@@ -764,10 +768,6 @@ window.App = {
 
         // Ensure select matches currentEnv
         if (sel) sel.value = currentEnv;
-
-        // Show Equip Button (will add implementation details later)
-        const eqBtn = document.getElementById('btn-equip-edit');
-        if (eqBtn) eqBtn.style.display = (currentEnv === 'home') ? 'inline-block' : 'none';
     },
 
     renderPlan: () => {
