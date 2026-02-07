@@ -218,23 +218,24 @@ const CATALOG = {
     "crunch": { muscle: "core", mode: "body", tier: 1, en: "Crunches", es: "Abdominales" },
 
     // Tier 2: Weighted Isolation / Moderate Compound / Skilled BW
-    "lunge": { muscle: "legs", mode: "load", tier: 2, en: "Weighted Lunges", es: "Estocadas con Carga" },
-    "row": { muscle: "pull", mode: "load", tier: 2, en: "Barbell Row", es: "Remo Barra" },
-    "pullup": { muscle: "pull", mode: "body", tier: 2, en: "Pull Ups", es: "Dominadas" },
-    "dip": { muscle: "push", mode: "body", tier: 2, en: "Dips", es: "Fondos" },
-    "curl": { muscle: "pull", mode: "load", tier: 2, en: "Bicep Curl", es: "Curl Bíceps" },
-    "ext": { muscle: "push", mode: "load", tier: 2, en: "Tricep Ext", es: "Ext. Tríceps" },
-    "weighted_crunch": { muscle: "core", mode: "load", tier: 2, en: "Cable Crunch", es: "Crunch en Polea" },
+    "lunge": { muscle: "legs", mode: "load", tier: 2, req: ["dumbbells"], en: "Weighted Lunges", es: "Estocadas con Carga" },
+    "row": { muscle: "pull", mode: "load", tier: 2, req: ["dumbbells"], en: "Dumbbell Row", es: "Remo Mancuerna" },
+    "pullup": { muscle: "pull", mode: "body", tier: 2, req: ["bar"], en: "Pull Ups", es: "Dominadas" },
+    "dip": { muscle: "push", mode: "body", tier: 2, req: ["bars"], en: "Dips", es: "Fondos" },
+    "curl": { muscle: "pull", mode: "load", tier: 2, req: ["dumbbells"], en: "Bicep Curl", es: "Curl Bíceps" },
+    "ext": { muscle: "push", mode: "load", tier: 2, req: ["dumbbells"], en: "Tricep Ext", es: "Ext. Tríceps" },
+    "weighted_crunch": { muscle: "core", mode: "load", tier: 2, req: ["dumbbells"], en: "Weighted Crunch", es: "Crunch con Carga" },
     "diamond_pushup": { muscle: "push", mode: "body", tier: 2, en: "Diamond Pushups", es: "Flexiones Diamante" },
 
     // Tier 3: High CNS / Heavy Compound / Advanced Calisthenics
-    "squat": { muscle: "legs", mode: "load", tier: 3, en: "Back Squat", es: "Sentadilla Trasera" },
-    "deadlift": { muscle: "pull", mode: "load", tier: 3, en: "Deadlift", es: "Peso Muerto" },
-    "bench": { muscle: "push", mode: "load", tier: 3, en: "Bench Press", es: "Press Banca" },
-    "ohp": { muscle: "push", mode: "load", tier: 3, en: "Overhead Press", es: "Press Militar" },
-    "hanging_raise": { muscle: "core", mode: "body", tier: 3, en: "Hanging Leg Raise", es: "Elevación de Piernas" },
+    "squat": { muscle: "legs", mode: "load", tier: 3, req: ["dumbbells"], en: "Goblet Squat", es: "Sentadilla Goblet" },
+    "deadlift": { muscle: "pull", mode: "load", tier: 3, req: ["dumbbells"], en: "DB Deadlift", es: "Peso Muerto Mancuernas" },
+    "bench": { muscle: "push", mode: "load", tier: 3, req: ["dumbbells"], en: "DB Floor Press", es: "Press Mancuernas Suelo" },
+    "ohp": { muscle: "push", mode: "load", tier: 3, req: ["dumbbells"], en: "DB Overhead Press", es: "Press Militar Mancuerna" },
+    "hanging_raise": { muscle: "core", mode: "body", tier: 3, req: ["bar"], en: "Hanging Leg Raise", es: "Elevación de Piernas" },
     "pistol": { muscle: "legs", mode: "body", tier: 3, en: "Pistol Squat", es: "Sentadilla Pistol" },
-    "archer_pushup": { muscle: "push", mode: "body", tier: 3, en: "Archer Pushups", es: "Flexiones Arqueras" }
+    "archer_pushup": { muscle: "push", mode: "body", tier: 3, en: "Archer Pushups", es: "Flexiones Arqueras" },
+    "jump_rope": { muscle: "cardio", mode: "time", tier: 1, req: ["rope"], en: "Jump Rope", es: "Saltar la Cuerda" }
 };
 
 const Trainer = {
@@ -287,6 +288,7 @@ const Trainer = {
     generateRoutine: (user, env = 'gym') => {
         const g = user.settings.goal;
         const lvl = user.settings.level;
+        const tools = user.settings.equip || []; // Home tools
 
         let schema;
         if (g === 'strength') {
@@ -308,15 +310,28 @@ const Trainer = {
         return schema.map(m => {
             const isHome = env === 'home';
 
-            // 1. Candidate Selection with Environment Safety
+            // 1. Candidate Selection with Environment Safety & Tool Check
             const candidates = Object.keys(CATALOG).filter(k => {
                 const item = CATALOG[k];
                 if (item.muscle !== m) return false;
 
                 // Environment Check
                 if (isHome) {
-                    const portable = item.mode === 'body' || item.mode === 'time' || ['curl', 'lunge', 'row', 'ohp'].includes(k);
-                    if (!portable) return false;
+                    // Check Tools Requirement
+                    if (item.req) {
+                        const hasTools = item.req.every(t => tools.includes(t));
+                        if (!hasTools) return false;
+                    }
+
+                    // If NO req (bodyweight/time) OR req met, verify portability logic just in case
+                    // Actually, if it has 'req' and met, it's valid. 
+                    // If it has NO req, we must ensure it's not a gym machine (like 'leg_press' - if we had it).
+                    // Our current catalog without 'req' is mostly bodyweight.
+                    // But to be safe, keep the portable check for items without explicit 'req'.
+                    if (!item.req) {
+                        const portable = item.mode === 'body' || item.mode === 'time' || ['curl', 'lunge', 'row', 'ohp'].includes(k);
+                        if (!portable) return false;
+                    }
                 }
 
                 // Tier Filter
@@ -330,31 +345,42 @@ const Trainer = {
             let finalCandidates = candidates;
 
             if (candidates.length === 0) {
-                // If strict filters failed (e.g. Advanced + Home + Legs), 
-                // we MUST find a valid exercise for the environment, even if we compromise slightly on Tier.
-
+                // Fallback logic
                 finalCandidates = Object.keys(CATALOG).filter(k => {
                     const item = CATALOG[k];
                     if (item.muscle !== m) return false;
-                    // MUST respect Environment even in fallback
+
                     if (isHome) {
-                        const portable = item.mode === 'body' || item.mode === 'time' || ['curl', 'lunge', 'row', 'ohp'].includes(k);
-                        if (!portable) return false;
+                        if (item.req) {
+                            return item.req.every(t => tools.includes(t));
+                        }
+                        const portable = item.mode === 'body' || item.mode === 'time';
+                        return portable;
                     }
                     return true;
-                }).sort((a, b) => CATALOG[b].tier - CATALOG[a].tier); // Prioritize hardest available
+                }).sort((a, b) => CATALOG[b].tier - CATALOG[a].tier);
 
-                // Take top 3 of what's left
                 finalCandidates = finalCandidates.slice(0, 3);
             }
 
-            // If still empty (e.g. absolutely no equipment for a muscle group), fallback to pushups/squats as universal failsafe
+            // Absolute last resort
             if (finalCandidates.length === 0) {
                 if (m === 'legs') finalCandidates = ['squat_bw'];
                 else if (m === 'push') finalCandidates = ['pushup'];
-                else if (m === 'pull') finalCandidates = ['pullup']; // or row
+                else if (m === 'pull') {
+                    // If no pullup bar, what pull fallback?
+                    // If no bar and no dumbbells, then no pull exercise is possible from CATALOG.
+                    // Fallback to a general bodyweight exercise to avoid crash.
+                    if (isHome && !tools.includes('bar') && !tools.includes('dumbbells')) {
+                        finalCandidates = ['plank']; // General core/bodyweight if no pull options
+                    } else {
+                        finalCandidates = ['pullup']; // Default if bar is available or not home
+                    }
+                }
                 else finalCandidates = ['plank'];
             }
+
+            if (finalCandidates.length === 0) finalCandidates = ['squat_bw']; // Universal fallback to avoid crash
 
             const pick = finalCandidates[Math.floor(Math.random() * finalCandidates.length)];
             const data = CATALOG[pick];
@@ -602,7 +628,7 @@ window.App = {
         const newUser = {
             name: n, email: e, joined: Date.now(),
             history: [], customExercises: [],
-            settings: { lang: 'es', theme: 'dark', goal: 'hypertrophy', level: 'intermediate', rTime: 90 }
+            settings: { lang: 'es', theme: 'dark', goal: 'hypertrophy', level: 'intermediate', rTime: 90, equip: undefined }
         };
 
         await Store.saveUser(newUser);
@@ -691,16 +717,57 @@ window.App = {
     },
 
     // TRAINER ACTIONS
+    openEquipSelector: () => {
+        document.getElementById('equip-overlay').classList.add('active');
+        // Pre-check
+        const eq = App.user.settings.equip || [];
+        document.getElementById('eq-du').checked = eq.includes('dumbbells');
+        document.getElementById('eq-ba').checked = eq.includes('bar');
+        document.getElementById('eq-jr').checked = eq.includes('rope');
+    },
+
+    closeEquipSelector: () => {
+        document.getElementById('equip-overlay').classList.remove('active');
+    },
+
+    saveEquipAndGen: async () => {
+        const eq = [];
+        if (document.getElementById('eq-du').checked) eq.push('dumbbells');
+        if (document.getElementById('eq-ba').checked) eq.push('bar');
+        if (document.getElementById('eq-jr').checked) eq.push('rope');
+
+        App.user.settings.equip = eq;
+        await Store.saveUser(App.user); // Save preference
+
+        App.closeEquipSelector();
+        // Force regeneration with Home mode
+        App.generate('home');
+    },
+
     generate: (env = null) => {
         // Read Env from Select if null (re-gen case) or default
         const sel = document.getElementById('plan-env');
         const currentEnv = env || (sel ? sel.value : 'gym');
+
+        // Check Logic for Home
+        if (currentEnv === 'home') {
+            if (!App.user.settings.equip) {
+                // First time asking? Or assume none?
+                // If undefined, open selector
+                App.openEquipSelector();
+                return;
+            }
+        }
 
         App.activeWorkout = Trainer.generateRoutine(App.user, currentEnv);
         App.renderPlan();
 
         // Ensure select matches currentEnv
         if (sel) sel.value = currentEnv;
+
+        // Show Equip Button (will add implementation details later)
+        const eqBtn = document.getElementById('btn-equip-edit');
+        if (eqBtn) eqBtn.style.display = (currentEnv === 'home') ? 'inline-block' : 'none';
     },
 
     renderPlan: () => {

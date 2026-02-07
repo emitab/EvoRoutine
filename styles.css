@@ -1139,3 +1139,36 @@ body {
     color: var(--text);
     transform: scale(0.96);
 }
+
+/* Equipment Selection */
+.equip-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.equip-option input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary);
+}
+
+.eq-label {
+    display: flex;
+    flex-direction: column;
+}
+
+.eq-label b {
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.eq-label small {
+    color: var(--text-muted);
+}

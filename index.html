@@ -218,15 +218,55 @@
                 <option value="gym" data-bind="env.gym">Gym Routine</option>
                 <option value="home" data-bind="env.home">Home Routine</option>
             </select>
-            <div style="width:24px"></div>
+            <button id="btn-equip-edit" class="icon-btn" onclick="App.openEquipSelector()"
+                style="display:none; font-size:1.2rem;">⚙️</button>
         </nav>
         <div id="plan-list" class="content list-container"></div>
         <button class="btn-square-add" onclick="App.openExSelector('add')">+</button>
         <div class="fab-container">
-            <button class="btn btn-primary btn-lg" onclick="App.startSess()" data-bind="auth.start">Start
-                Journey</button>
+            Journey</button>
         </div>
     </section>
+
+    <!-- Equipment Selector Overlay -->
+    <div id="equip-overlay" class="sheet-overlay">
+        <div class="action-sheet" style="height:auto; min-height:40vh;">
+            <div class="sheet-header">
+                <h3>Equipamiento en Casa</h3>
+                <div class="close-sheet" onclick="App.closeEquipSelector()">✕</div>
+            </div>
+            <div class="sheet-content" style="padding:24px;">
+                <p style="color:var(--text-muted); margin-bottom:16px;">¿Qué tienes disponible?</p>
+
+                <label class="equip-option">
+                    <input type="checkbox" id="eq-du" value="dumbbells">
+                    <div class="eq-label">
+                        <b>Mancuernas / Pesas</b>
+                        <small>Para ejercicios con carga</small>
+                    </div>
+                </label>
+
+                <label class="equip-option">
+                    <input type="checkbox" id="eq-ba" value="bar">
+                    <div class="eq-label">
+                        <b>Barra de Dominadas</b>
+                        <small>Para espalda y core</small>
+                    </div>
+                </label>
+
+                <label class="equip-option">
+                    <input type="checkbox" id="eq-jr" value="rope">
+                    <div class="eq-label">
+                        <b>Cuerda de Saltar</b>
+                        <small>Para cardio y calentamiento</small>
+                    </div>
+                </label>
+
+                <button class="btn btn-primary" onclick="App.saveEquipAndGen()"
+                    style="margin-top:24px; width:100%">GUARDAR Y GENERAR</button>
+            </div>
+        </div>
+    </div>
 
     <!-- VIEW: SESSION -->
     <section id="v-sess" class="view">
