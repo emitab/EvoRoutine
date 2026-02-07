@@ -355,6 +355,24 @@ window.App = {
     selectorMode: 'add',
 
     init: async () => {
+        // Ensure translations are present (hotfix)
+        if (!I18n.data.en['cust.title']) {
+            const en = {
+                "cust.title": "New Exercise", "cust.desc": "Create your own exercise.",
+                "cust.name": "Name (e.g. Box Jumps)", "cust.type": "Tracking Type",
+                "cust.t.load": "Weights & Reps", "cust.t.body": "Reps Only (Bodyweight)", "cust.t.time": "Time / Duration",
+                "cust.create": "Create", "cust.cancel": "Cancel", "cust.btn": "+ Create Custom Exercise", "cust.sub": "Custom"
+            };
+            const es = {
+                "cust.title": "Nuevo Ejercicio", "cust.desc": "Crea tu propio ejercicio.",
+                "cust.name": "Nombre (ej. Saltos al Cajón)", "cust.type": "Tipo de Registro",
+                "cust.t.load": "Peso y Reps", "cust.t.body": "Solo Reps (Corporal)", "cust.t.time": "Tiempo / Duración",
+                "cust.create": "Crear", "cust.cancel": "Cancelar", "cust.btn": "+ Crear Personalizado", "cust.sub": "Personalizado"
+            };
+            Object.assign(I18n.data.en, en);
+            Object.assign(I18n.data.es, es);
+        }
+
         // Hydrate
         const email = Store.session.get();
         if (email) {
@@ -701,6 +719,7 @@ window.App = {
     },
 
     openCustomCreator: () => {
+        UI.renderApp();
         document.getElementById('custom-ex-overlay').classList.add('active');
         document.getElementById('ex-selector-overlay').classList.remove('active');
         setTimeout(() => document.getElementById('cust-ex-name').focus(), 100);
