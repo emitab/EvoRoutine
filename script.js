@@ -225,13 +225,16 @@ const CATALOG = {
     "curl": { muscle: "pull", mode: "load", tier: 2, en: "Bicep Curl", es: "Curl Bíceps" },
     "ext": { muscle: "push", mode: "load", tier: 2, en: "Tricep Ext", es: "Ext. Tríceps" },
     "weighted_crunch": { muscle: "core", mode: "load", tier: 2, en: "Cable Crunch", es: "Crunch en Polea" },
+    "diamond_pushup": { muscle: "push", mode: "body", tier: 2, en: "Diamond Pushups", es: "Flexiones Diamante" },
 
-    // Tier 3: High CNS / Heavy Compound
+    // Tier 3: High CNS / Heavy Compound / Advanced Calisthenics
     "squat": { muscle: "legs", mode: "load", tier: 3, en: "Back Squat", es: "Sentadilla Trasera" },
     "deadlift": { muscle: "pull", mode: "load", tier: 3, en: "Deadlift", es: "Peso Muerto" },
     "bench": { muscle: "push", mode: "load", tier: 3, en: "Bench Press", es: "Press Banca" },
     "ohp": { muscle: "push", mode: "load", tier: 3, en: "Overhead Press", es: "Press Militar" },
-    "hanging_raise": { muscle: "core", mode: "body", tier: 3, en: "Hanging Leg Raise", es: "Elevación de Piernas" }
+    "hanging_raise": { muscle: "core", mode: "body", tier: 3, en: "Hanging Leg Raise", es: "Elevación de Piernas" },
+    "pistol": { muscle: "legs", mode: "body", tier: 3, en: "Pistol Squat", es: "Sentadilla Pistol" },
+    "archer_pushup": { muscle: "push", mode: "body", tier: 3, en: "Archer Pushups", es: "Flexiones Arqueras" }
 };
 
 const Trainer = {
@@ -303,41 +306,54 @@ const Trainer = {
         }
 
         return schema.map(m => {
-            // Filter candidates based on Environment AND Level (Tier system)
+            const isHome = env === 'home';
+
+            // 1. Candidate Selection with Environment Safety
             const candidates = Object.keys(CATALOG).filter(k => {
                 const item = CATALOG[k];
                 if (item.muscle !== m) return false;
 
                 // Environment Check
-                if (env === 'home') {
-                    // Home: Allow body, time, OR load if it's not a heavy barbell move (assuming dumbbells might exist, strictly home usually implies limited gear)
-                    // For logic safety, let's keep restricted home mode unless user overrides.
-                    // But Advanced Home users might have gear. For now, strict 'body'/'time' for home to be safe, 
-                    // OR allow Tier 1/2 load items (dumbbells). 
-                    // Let's stick to strict mode filter for HOME to avoid "Barbell Squat" at home.
+                if (isHome) {
                     const portable = item.mode === 'body' || item.mode === 'time' || ['curl', 'lunge', 'row', 'ohp'].includes(k);
                     if (!portable) return false;
                 }
 
-                // LEVEL / TIER FILTER (The Core Improvement)
-                // Beginner: Tier 1 & 2 (No Tier 3 heavy compounds usually, or very guided) -> Let's say Tier 1 & 2 only.
-                // Intermediate: Tier 1, 2, 3.
-                // Advanced: Tier 2 & 3 ONLY. No Tier 1 basics.
-
+                // Tier Filter
                 if (lvl === 'beginner' && item.tier > 2) return false;
-                if (lvl === 'advanced' && item.tier < 2) return false;
+                if (lvl === 'advanced' && item.tier < 2) return false; // Strict advanced filter
 
                 return true;
             });
 
-            // Fallback: If strict filtering leaves no candidates (e.g. Advanced Core at Home?), 
-            // relax filter to muscle match only, prioritizing highest tier avail.
+            // 2. Intelligent Fallback (The Safety Net)
             let finalCandidates = candidates;
+
             if (candidates.length === 0) {
-                finalCandidates = Object.keys(CATALOG).filter(k => CATALOG[k].muscle === m)
-                    .sort((a, b) => CATALOG[b].tier - CATALOG[a].tier); // Prefer harder ones
-                // Take top 2
-                finalCandidates = finalCandidates.slice(0, 2);
+                // If strict filters failed (e.g. Advanced + Home + Legs), 
+                // we MUST find a valid exercise for the environment, even if we compromise slightly on Tier.
+
+                finalCandidates = Object.keys(CATALOG).filter(k => {
+                    const item = CATALOG[k];
+                    if (item.muscle !== m) return false;
+                    // MUST respect Environment even in fallback
+                    if (isHome) {
+                        const portable = item.mode === 'body' || item.mode === 'time' || ['curl', 'lunge', 'row', 'ohp'].includes(k);
+                        if (!portable) return false;
+                    }
+                    return true;
+                }).sort((a, b) => CATALOG[b].tier - CATALOG[a].tier); // Prioritize hardest available
+
+                // Take top 3 of what's left
+                finalCandidates = finalCandidates.slice(0, 3);
+            }
+
+            // If still empty (e.g. absolutely no equipment for a muscle group), fallback to pushups/squats as universal failsafe
+            if (finalCandidates.length === 0) {
+                if (m === 'legs') finalCandidates = ['squat_bw'];
+                else if (m === 'push') finalCandidates = ['pushup'];
+                else if (m === 'pull') finalCandidates = ['pullup']; // or row
+                else finalCandidates = ['plank'];
             }
 
             const pick = finalCandidates[Math.floor(Math.random() * finalCandidates.length)];
