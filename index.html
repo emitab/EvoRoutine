@@ -152,6 +152,14 @@
                         <option value="advanced" data-bind="lvl.adv">Advanced</option>
                     </select>
                 </div>
+                <div class="divider"></div>
+                <div class="form-row">
+                    <label data-bind="lbl.env">Environment</label>
+                    <select id="sel-env" class="sel-clean" onchange="App.updateSettings()">
+                        <option value="gym" data-bind="env.gym">Gym</option>
+                        <option value="home" data-bind="env.home">Home</option>
+                    </select>
+                </div>
             </div>
 
             <h4 class="settings-section-title" data-bind="sett.privacy" style="margin-top: 32px;">Privacy &amp; Data
