@@ -43,6 +43,9 @@ const I18n = {
             "goal.hyp": "Hypertrophy", "goal.hyp.d": "Muscle Growth",
             "goal.str": "Strength", "goal.str.d": "Max Power",
             "goal.end": "Endurance", "goal.end.d": "Stamina",
+            "goal.hyp.exp": "Focus: Metabolic stress & volume. AI will prioritize time-under-tension and moderate rep ranges (8-12).",
+            "goal.str.exp": "Focus: Neuromuscular efficiency. AI will increase rest times and prioritize lower reps (1-5) with heavy loads.",
+            "goal.end.exp": "Focus: Aerobic capacity. AI will shorten rest periods and increase repetition targets (15+).",
             "lvl.beg": "Beginner", "lvl.int": "Intermediate", "lvl.adv": "Advanced",
             "unit.kg": "KG", "unit.reps": "REPS", "unit.sec": "SEC",
             "tut.welcome.title": "Welcome to EvoRoutine!",
@@ -108,6 +111,9 @@ const I18n = {
             "goal.hyp": "Hipertrofia", "goal.hyp.d": "Volumen Muscular",
             "goal.str": "Fuerza", "goal.str.d": "Potencia Máxima",
             "goal.end": "Resistencia", "goal.end.d": "Fondo Físico",
+            "goal.hyp.exp": "Foco: Estrés metabólico. La IA priorizará tiempo bajo tensión y rangos medios (8-12 reps).",
+            "goal.str.exp": "Foco: Eficiencia neuromuscular. La IA aumentará descansos y priorizará cargas altas (1-5 reps).",
+            "goal.end.exp": "Foco: Capacidad aeróbica. La IA acortará descansos y aumentará el volumen de repeticiones (15+).",
             "lvl.beg": "Principiante", "lvl.int": "Intermedio", "lvl.adv": "Avanzado",
             "unit.kg": "KG", "unit.reps": "REPS", "unit.sec": "SEG",
             "tut.welcome.title": "¡Bienvenido a EvoRoutine!",
@@ -581,6 +587,11 @@ window.App = {
                 `;
                 list.appendChild(el);
             });
+        }
+
+        // Trigger Tutorial Check
+        if (window.Tutorial) {
+            setTimeout(() => Tutorial.checkAndShow(), 500);
         }
     },
 
