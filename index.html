@@ -295,8 +295,18 @@
         <div class="center-content">
             <div class="input-matrix">
                 <div class="in-group">
-                    <input type="number" id="inp-1" class="in-giant" inputmode="decimal">
+                    <div style="display:flex; align-items:center; gap:12px; justify-content:center;">
+                        <button id="btn-t-dec" class="btn-circle-sm" style="display:none"
+                            onclick="App.adjustInput('inp-1', -10)">-10</button>
+                        <input type="number" id="inp-1" class="in-giant" inputmode="decimal"
+                            style="text-align:center; max-width:140px;">
+                        <button id="btn-t-inc" class="btn-circle-sm" style="display:none"
+                            onclick="App.adjustInput('inp-1', 10)">+10</button>
+                    </div>
                     <label id="lbl-1">KG</label>
+                    <button id="btn-timer-toggle"
+                        style="display:none; margin-top:8px; background:none; border:none; font-size:2rem; color:var(--primary); cursor:pointer;"
+                        onclick="App.toggleSessTimer()">▶</button>
                 </div>
                 <div class="in-group">
                     <input type="number" id="inp-2" class="in-giant" inputmode="decimal">
